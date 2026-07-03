@@ -12,9 +12,7 @@
 ![React](https://img.shields.io/badge/react-19-A78BFA?style=for-the-badge&logo=react&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-4EDEA3?style=for-the-badge&logo=fastapi&logoColor=white)
 
-![Hackathon](https://img.shields.io/badge/🏆_NIRMAN-2026-FFA94D?style=flat-square)
 ![Problem](https://img.shields.io/badge/Problem_Statement-%234-FF6B6B?style=flat-square)
-![University](https://img.shields.io/badge/Amity_University-Mumbai-A78BFA?style=flat-square)
 
 ---
 
@@ -256,8 +254,8 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/SaudSatopay/CrackWatch-NirmanHackathon.git
-cd CrackWatch-NirmanHackathon
+git clone https://github.com/aaryannighut/CrackZone.git
+cd CrackZone
 ```
 
 ### 2. Install Backend Dependencies
@@ -579,30 +577,10 @@ Highlights:
 
 ---
 
-## 🏆 Hackathon Context
-
-**Event:** NIRMAN 2026 — Amity University Mumbai
-**Dates:** April 15-17, 2026 (48 hours)
-**Problem Statement:** #4 — AI-based infrastructure damage detection
-**Team:** Solo — Saud Satopay
 
 ### The One Line That Wins
 
 > **"Detecting a pothole doesn't fix it. A watched government does."**
-
----
-
-## 👨‍💻 Author
-
-<div align="center">
-
-### **Saud Satopay**
-
-Student Developer · Amity University Mumbai
-
-[![GitHub](https://img.shields.io/badge/GitHub-SaudSatopay-4EDEA3?style=for-the-badge&logo=github)](https://github.com/SaudSatopay)
-
-</div>
 
 ---
 
@@ -619,14 +597,12 @@ MIT — Feel free to fork, adapt, and deploy to your own municipality. Open-sour
 - **Twilio** — WhatsApp Sandbox (free tier)
 - **OpenStreetMap + OSRM** — Free mapping infrastructure
 - **Ultralytics** — YOLOv8 inference framework
-- **Amity University Mumbai** — Hosting NIRMAN 2026
 - Every pothole that inspired this build. May you never trip another commuter.
 
 ---
 
 <div align="center">
 
-**Built with ☕ and zero sleep during NIRMAN Hackathon 2026.**
 
 *If this helped your city, a ⭐ on GitHub means the world.*
 
