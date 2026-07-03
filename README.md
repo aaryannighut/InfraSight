@@ -12,8 +12,6 @@
 ![React](https://img.shields.io/badge/react-19-A78BFA?style=for-the-badge&logo=react&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-4EDEA3?style=for-the-badge&logo=fastapi&logoColor=white)
 
-![Problem](https://img.shields.io/badge/Problem_Statement-%234-FF6B6B?style=flat-square)
-
 ---
 
 *Built in 48 hours. Deployable to 1 billion people.*
