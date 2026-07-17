@@ -12,13 +12,31 @@ SECRET_KEY = "crackwatch-nirman-2026-secret"
 ALGORITHM = "HS256"
 TOKEN_EXPIRY = 86400  # 24 hours
 
-# Hardcoded users for hackathon (in production: database)
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Secure env-based users
 USERS = {
-    "admin": {"password": "admin123", "role": "government", "name": "Inspector Kumar", "department": "PWD Mumbai"},
-    "inspector": {"password": "inspect123", "role": "government", "name": "Officer Sharma", "department": "Municipal Corp"},
-    "engineer": {"password": "eng123", "role": "government", "name": "Er. Patel", "department": "NHAI"},
-    # Demo citizen account — password-protected citizen profile for presentation
-    "saud": {"password": "123", "role": "citizen", "name": "Saud Vinchu", "department": ""},
+    os.getenv("ADMIN_USERNAME", "admin"): {
+        "password": os.getenv("ADMIN_PASSWORD", "admin123"),
+        "role": "admin",
+        "name": "Administrator",
+        "department": "Admin HQ"
+    },
+    os.getenv("INSPECTOR_USERNAME", "inspector"): {
+        "password": os.getenv("INSPECTOR_PASSWORD", "inspect123"),
+        "role": "inspector",
+        "name": "Inspector",
+        "department": "Municipal Corp"
+    },
+    os.getenv("CITIZEN_USERNAME", "citizen"): {
+        "password": os.getenv("CITIZEN_PASSWORD", "cit123"),
+        "role": "citizen",
+        "name": "Citizen",
+        "department": ""
+    },
 }
 
 
@@ -53,7 +71,7 @@ def get_current_user(request: Request) -> dict:
 
 def require_government(request: Request) -> dict:
     user = get_current_user(request)
-    if user.get("role") != "government":
+    if user.get("role") not in ["government", "admin", "inspector"]:
         raise HTTPException(403, "Government access required")
     return user
 

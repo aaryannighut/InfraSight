@@ -29,19 +29,17 @@ export default function SettingsPage({ user, onLogout }) {
   };
 
   return (
-    <motion.div className="space-y-6 max-w-2xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <motion.div className="space-y-6 max-w-2xl mx-auto" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       {/* Profile card */}
-      <div className="bg-white/[0.03] rounded-2xl p-5">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
-            <User className="w-7 h-7 text-black" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white">{user?.name || "Inspector"}</h3>
-            <p className="text-sm text-white/40">{user?.department || "Municipal Department"}</p>
-            <p className="text-xs text-emerald-400/60 font-mono mt-0.5">{user?.role || "government"}</p>
-          </div>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">ACTIVE</span>
+      <div className="bg-white/[0.03] rounded-2xl p-6 relative flex flex-col items-center text-center">
+        <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">ACTIVE</span>
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center mb-4">
+          <User className="w-7 h-7 text-black" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-white mb-1">{user?.name || "Inspector"}</h3>
+          <p className="text-sm text-white/40 mb-2">{user?.department || "Municipal Department"}</p>
+          <p className="text-xs text-emerald-400/60 font-mono inline-block">{user?.role || "government"}</p>
         </div>
       </div>
 
@@ -116,7 +114,7 @@ export default function SettingsPage({ user, onLogout }) {
         Sign Out
       </motion.button>
 
-      <p className="text-center text-[10px] text-white/10">CRACKWATCH v3.3.0 — NIRMAN Hackathon 2026</p>
+      <p className="text-center text-[10px] text-white/10">INFRASIGHT v3.3.0</p>
     </motion.div>
   );
 }

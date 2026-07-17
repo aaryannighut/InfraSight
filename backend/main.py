@@ -36,7 +36,7 @@ TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
 
 app = FastAPI(
-    title="CRACKWATCH API",
+    title="INFRASIGHT API",
     description="AI-powered infrastructure damage detection system",
     version="1.0.0",
 )
@@ -121,7 +121,7 @@ async def startup():
 
 @app.get("/")
 async def root():
-    return {"status": "online", "service": "CRACKWATCH API", "version": "1.0.0"}
+    return {"status": "online", "service": "INFRASIGHT API", "version": "1.0.0"}
 
 
 @app.get("/health")
@@ -887,7 +887,7 @@ def _extract_gps_from_exif(image_bytes: bytes):
 whatsapp_sessions: dict[str, dict] = {}
 
 WELCOME_MSG = (
-    "👋 Welcome to *CRACKWATCH* — India's AI-powered infrastructure damage reporter.\n\n"
+    "👋 Welcome to *INFRASIGHT* — India's AI-powered infrastructure damage reporter.\n\n"
     "📸 *Step 1:* Send a photo of a pothole, crack, or damaged infrastructure.\n"
     "📍 *Step 2:* Share your location (tap 📎 → Location → Send current location).\n\n"
     "I'll detect the damage with AI, estimate repair cost, and submit it to authorities — all in under 10 seconds."

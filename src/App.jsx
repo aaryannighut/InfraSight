@@ -13,6 +13,8 @@ import VideoScan from "@/components/VideoScan";
 import LoginPage from "@/components/LoginPage";
 import SettingsPage from "@/components/SettingsPage";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
+import CitizenView from "@/components/CitizenView";
+import InspectorView from "@/components/InspectorView";
 import {
   Bell,
   Search,
@@ -72,7 +74,7 @@ function Header({ activeTab, user, onLogout }) {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
             <User className="w-4 h-4 text-black" />
           </div>
-          <div className="text-left">
+          <div className="text-center">
             <span className="text-sm text-white font-semibold block leading-tight">{user?.name || 'Inspector'}</span>
             <span className="text-[10px] text-zinc-500">{user?.department || 'Municipal Dept.'}</span>
           </div>
@@ -174,40 +176,70 @@ function Dashboard({ activeTab, setActiveTab, user, onLogout }) {
   );
 }
 
+// ── App state machine ─────────────────────────────────────────────────────
+// screen: "hero" → "login" → (role portal)
+// On logout → back to "hero"
+// If already logged in (localStorage session) → skip hero & login
+
 function App() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("crackwatch_user");
     return saved ? JSON.parse(saved) : null;
   });
-  const [showHero, setShowHero] = useState(true);
+
+  // "hero" | "login" | "dashboard"
+  const [screen, setScreen] = useState("hero");
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleLogout = () => {
     localStorage.removeItem("crackwatch_token");
     localStorage.removeItem("crackwatch_user");
     setUser(null);
-    setShowHero(true);
+    setScreen("hero");
   };
 
-  // Not logged in → show login
-  if (!user) {
-    return <LoginPage onLogin={(data) => { setUser(data); setShowHero(true); }} />;
+  const handleLogin = (data) => {
+    setUser(data);
+    // admin gets hero → dashboard flow; others go direct to their portal
+    setScreen("dashboard");
+  };
+
+  // ── Already logged in: skip hero & login ─────────
+  if (user) {
+    // All roles now use the unified Dashboard (administration UI)
+
+    return (
+      <TooltipProvider>
+        <AnimatePresence mode="wait">
+          {screen === "hero" ? (
+            <motion.div key="hero" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              <HeroPage onEnter={() => setScreen("dashboard")} />
+            </motion.div>
+          ) : (
+            <motion.div key="dash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              <Dashboard activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </TooltipProvider>
+    );
   }
 
+  // ── Not logged in: Hero → Login flow ─────────────
   return (
-    <TooltipProvider>
-      {showHero ? (
-        <HeroPage onEnter={() => setShowHero(false)} />
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Dashboard activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
+    <AnimatePresence mode="wait">
+      {screen === "hero" && (
+        <motion.div key="hero" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+          {/* onEnter = the "Sign In" / "Launch Dashboard" / "Tap to enter" clicks */}
+          <HeroPage onEnter={() => setScreen("login")} />
         </motion.div>
       )}
-    </TooltipProvider>
+      {screen === "login" && (
+        <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+          <LoginPage onLogin={handleLogin} onBack={() => setScreen("hero")} />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

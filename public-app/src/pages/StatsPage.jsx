@@ -209,7 +209,7 @@ export default function StatsPage() {
         {/* Footer */}
         <div className="text-center pt-4 pb-6">
           <p className="text-[10px] text-white/15">Data is public. Government is accountable.</p>
-          <p className="text-[10px] text-[#4edea3]/30 font-bold mt-1">CRACKWATCH — Smart Infrastructure for All</p>
+          <p className="text-[10px] text-[#4edea3]/30 font-bold mt-1">INFRASIGHT — Intelligent Infrastructure Monitoring for All</p>
         </div>
       </div>
     </div>

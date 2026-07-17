@@ -121,7 +121,11 @@ export default function GovtMap() {
                 className: '', iconSize: [18, 18], iconAnchor: [9, 9],
               })} />
           )}
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer
+            url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            maxZoom={20}
+            subdomains={['mt0','mt1','mt2','mt3']}
+          />
           <MarkerClusterGroup
             chunkedLoading
             maxClusterRadius={35}

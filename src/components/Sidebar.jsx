@@ -44,7 +44,25 @@ export default function Sidebar({ activeTab, onTabChange }) {
           whileHover={{ scale: 1.05, rotate: 2 }}
           whileTap={{ scale: 0.95 }}
         >
-          <ScanLine className="w-5 h-5 text-emerald-400" />
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+            <defs>
+              <linearGradient id="infra-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#14D9C4" />
+                <stop offset="100%" stopColor="#18C964" />
+              </linearGradient>
+            </defs>
+            <rect width="24" height="24" rx="6" fill="url(#infra-grad)" />
+            <path d="M5 24 L11 6" stroke="white" strokeWidth="1" strokeOpacity="0.4" fill="none" />
+            <path d="M19 24 L13 6" stroke="white" strokeWidth="1" strokeOpacity="0.4" fill="none" />
+            <path d="M12 24 L12 6" stroke="white" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+            
+            <path d="M7 10 L7 8 L9 8" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M17 10 L17 8 L15 8" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7 14 L7 16 L9 16" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M17 14 L17 16 L15 16" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            
+            <path d="M11 11 L13 13 L11.5 15" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           <motion.div
             className="absolute inset-0 rounded-xl bg-emerald-400/20"
             animate={{ opacity: [0, 0.5, 0] }}
@@ -60,11 +78,8 @@ export default function Sidebar({ activeTab, onTabChange }) {
               transition={{ duration: 0.2 }}
             >
               <h1 className="text-base font-extrabold text-white tracking-wide leading-tight">
-                CRACK<span className="text-emerald-400">WATCH</span>
+                INFRA<span className="text-emerald-400">SIGHT</span>
               </h1>
-              <p className="text-[10px] text-zinc-500 tracking-[0.15em] uppercase font-semibold">
-                Smart Infrastructure
-              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -150,32 +165,6 @@ export default function Sidebar({ activeTab, onTabChange }) {
 
       {/* Bottom */}
       <div className="px-4 pb-5 space-y-3">
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-4 rounded-xl bg-gradient-to-br from-zinc-800/50 to-zinc-900/30 border border-zinc-700/20"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-white">
-                  NIRMAN 2026
-                </span>
-              </div>
-              <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">
-                AI-Powered Infrastructure Command Center
-              </p>
-              <div className="mt-2 flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-zinc-500" />
-                <span className="text-[10px] text-zinc-500 font-medium">
-                  Mumbai, Maharashtra
-                </span>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <motion.button
           onClick={() => setCollapsed(!collapsed)}

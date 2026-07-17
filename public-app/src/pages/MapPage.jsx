@@ -138,7 +138,11 @@ export default function MapPage() {
       <div className="flex-1">
         <MapContainer center={[19.035, 73.035]} zoom={13} className="h-full w-full" zoomControl={false}>
           <FlyTo center={flyTo} />
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+          <TileLayer
+            url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+            maxZoom={20}
+            subdomains={['mt0','mt1','mt2','mt3']}
+          />
           <MapClickHandler onMapClick={(loc) => { setSelected(null); setQuickReport(loc); setQuickSector(null); setQuickDesc(''); setQuickFile(null); }} />
 
           {/* Quick report pin */}

@@ -16,6 +16,8 @@ import {
   Cpu,
   Database,
   Wifi,
+  X,
+  Play
 } from "lucide-react";
 
 /* ─── Floating Orbs ─── */
@@ -304,6 +306,7 @@ export default function HeroPage({ onEnter }) {
   const [hovered, setHovered] = useState(false);
   const mouse = useMousePosition();
   const [loaded, setLoaded] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 300);
@@ -341,7 +344,25 @@ export default function HeroPage({ onEnter }) {
             className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20"
             whileHover={{ scale: 1.1, rotate: 5 }}
           >
-            <ScanLine className="w-5 h-5 text-emerald-400" />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-6 h-6">
+              <defs>
+                <linearGradient id="infra-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#14D9C4" />
+                  <stop offset="100%" stopColor="#18C964" />
+                </linearGradient>
+              </defs>
+              <rect width="24" height="24" rx="6" fill="url(#infra-grad)" />
+              <path d="M5 24 L11 6" stroke="white" strokeWidth="1" strokeOpacity="0.4" fill="none" />
+              <path d="M19 24 L13 6" stroke="white" strokeWidth="1" strokeOpacity="0.4" fill="none" />
+              <path d="M12 24 L12 6" stroke="white" strokeWidth="1.5" strokeDasharray="3 3" fill="none" />
+              
+              <path d="M7 10 L7 8 L9 8" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17 10 L17 8 L15 8" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M7 14 L7 16 L9 16" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17 14 L17 16 L15 16" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              
+              <path d="M11 11 L13 13 L11.5 15" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             <motion.div
               className="absolute inset-0 rounded-xl bg-emerald-400/20"
               animate={{ opacity: [0, 0.5, 0] }}
@@ -349,7 +370,7 @@ export default function HeroPage({ onEnter }) {
             />
           </motion.div>
           <span className="text-base font-extrabold text-white tracking-wide">
-            CRACK<span className="text-emerald-400">WATCH</span>
+            INFRA<span className="text-emerald-400">SIGHT</span>
           </span>
         </div>
 
@@ -473,11 +494,12 @@ export default function HeroPage({ onEnter }) {
               </motion.button>
 
               <motion.button
+                onClick={() => setIsVideoOpen(true)}
                 className="px-6 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-medium text-sm hover:border-zinc-500 hover:text-white transition-all flex items-center gap-2"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Eye className="w-4 h-4" />
+                <Play className="w-4 h-4" />
                 Watch Demo
               </motion.button>
             </motion.div>
@@ -661,6 +683,36 @@ export default function HeroPage({ onEnter }) {
           <ChevronDown className="w-4 h-4 text-zinc-600" />
         </motion.div>
       </motion.div>
+
+      {/* Video Fullscreen Interactive Overlay */}
+      <AnimatePresence>
+        {isVideoOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] bg-black"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+          >
+            {/* Subtle exit button */}
+            <button
+              className="absolute top-6 right-6 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all backdrop-blur-md"
+              onClick={() => setIsVideoOpen(false)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <video
+              src="/demo_video.mp4"
+              className="w-full h-full object-cover"
+              autoPlay
+              playsInline
+              onEnded={() => setIsVideoOpen(false)}
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
