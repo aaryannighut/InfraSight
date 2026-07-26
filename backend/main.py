@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 from inference import get_detector, check_image_authenticity
 from severity import compute_severity, compute_overall_stats
 from cost_engine import estimate_cost, rank_priorities, generate_repair_plan, explain_severity
-from auth import login, register_citizen, verify_token
+from auth import login, register_citizen, verify_token, register_contractor, get_all_contractors, register_citizen_user
 from fraud_detection import run_full_fraud_check
 from analytics_engine import generate_wall_of_shame, generate_heatmap_data, generate_priority_queue, generate_city_health_scores
 from predictive_engine import predict_all_detections, generate_area_forecast
@@ -101,21 +101,14 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 @app.on_event("startup")
 async def startup():
-    """Pre-load model on startup so first request is fast. Load demo data."""
+    """Pre-load model on startup so first request is fast. Load shared store."""
     print("[CRACKWATCH] Starting up...")
     get_detector()
     try:
-        await seed_demo_gamification()
-        # Load pre-seeded image-based reports from shared_store.json if present.
-        # If the file is missing, fall back to legacy hardcoded 8-report seed.
         _reload_shared_store()
-        if not citizen_reports:
-            await seed_demo_reports()
-            print("[CRACKWATCH] Fallback seed (8 hardcoded reports) loaded.")
-        else:
-            print(f"[CRACKWATCH] Loaded {len(citizen_reports)} reports from shared_store.json")
+        print(f"[CRACKWATCH] Loaded {len(citizen_reports)} reports from shared_store.json")
     except Exception as e:
-        print(f"[CRACKWATCH] Auto-seed error: {e}")
+        print(f"[CRACKWATCH] Store load error: {e}")
     print("[CRACKWATCH] Ready.")
 
 
@@ -143,8 +136,14 @@ async def auth_login(username: str = Form(...), password: str = Form(...)):
 
 
 @app.post("/auth/register")
-async def auth_register(name: str = Form(...)):
-    """Citizen registration — just a name, no password."""
+async def auth_register(
+    name: str = Form(...),
+    username: Optional[str] = Form(default=None),
+    password: Optional[str] = Form(default=None),
+):
+    """Citizen registration — with username and password, or name only."""
+    if username and password:
+        return register_citizen_user(name, username, password)
     if not name.strip():
         raise HTTPException(400, "Name is required")
     return register_citizen(name.strip())
@@ -159,6 +158,133 @@ async def auth_me(request: Request):
     token = auth_header.split(" ")[1]
     payload = verify_token(token)
     return {"username": payload["sub"], "role": payload["role"], "name": payload["name"]}
+
+
+# ============================================================
+# CONTRACTOR & WORK ASSIGNMENT ENDPOINTS
+# ============================================================
+
+@app.post("/auth/register-contractor")
+async def auth_register_contractor(
+    name: str = Form(...),
+    company: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    """Inspector registers a new contractor account."""
+    if not username.strip() or not password.strip():
+        raise HTTPException(400, "Username and password are required")
+    return register_contractor(name, company, username, password)
+
+
+@app.get("/inspector/contractors")
+async def list_contractors():
+    """List all contractors registered in the system."""
+    return {"contractors": get_all_contractors()}
+
+
+@app.post("/inspector/assign-work")
+async def assign_work(
+    report_id: str = Form(...),
+    contractor_username: str = Form(...),
+    priority: str = Form(default="medium"),
+    notes: str = Form(default=""),
+    target_date: Optional[str] = Form(default=None),
+):
+    """Inspector assigns a report/complaint to a specific contractor with priority."""
+    target_report = None
+    for r in citizen_reports:
+        if r["id"] == report_id:
+            target_report = r
+            break
+    if not target_report:
+        for r in detection_store:
+            if r["id"] == report_id:
+                target_report = r
+                break
+                
+    if not target_report:
+        raise HTTPException(404, "Report not found")
+        
+    target_report["assigned_to"] = contractor_username
+    target_report["priority"] = priority
+    target_report["assignment_notes"] = notes
+    target_report["target_date"] = target_date or datetime.now(timezone.utc).isoformat()
+    target_report["status"] = "assigned"
+    
+    if "status_history" not in target_report:
+        target_report["status_history"] = []
+    target_report["status_history"].append({
+        "status": "assigned",
+        "time": datetime.now(timezone.utc).isoformat(),
+        "note": f"Assigned to contractor @{contractor_username} ({priority} priority)",
+    })
+    
+    _persist_shared_store()
+    return {"message": f"Report {report_id} assigned to {contractor_username}", "report": target_report}
+
+
+@app.get("/contractor/tasks")
+async def get_contractor_tasks(username: Optional[str] = None):
+    """Get tasks assigned to a specific contractor or current user."""
+    filter_username = username
+    assigned_tasks = []
+    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    for r in all_reports:
+        assigned = r.get("assigned_to")
+        if assigned and (not filter_username or assigned == filter_username or filter_username == "contractor"):
+            assigned_tasks.append(r)
+            
+    return {"tasks": assigned_tasks, "total": len(assigned_tasks)}
+
+
+@app.post("/contractor/tasks/{report_id}/status")
+async def update_contractor_task_status(
+    report_id: str,
+    status: str = Form(...),
+    notes: str = Form(default=""),
+    file: Optional[UploadFile] = File(default=None),
+):
+    """Contractor updates job status (in_progress, fixed, completed) and uploads proof image."""
+    target_report = None
+    for r in citizen_reports:
+        if r["id"] == report_id:
+            target_report = r
+            break
+    if not target_report:
+        for r in detection_store:
+            if r["id"] == report_id:
+                target_report = r
+                break
+
+    if not target_report:
+        raise HTTPException(404, "Task not found")
+
+    target_report["status"] = status
+    if "status_history" not in target_report:
+        target_report["status_history"] = []
+
+    proof_info = None
+    if file and file.content_type and file.content_type.startswith("image/"):
+        image_bytes = await file.read()
+        if len(image_bytes) > 0:
+            detector = get_detector()
+            res = detector.detect_from_bytes(image_bytes, 0.25)
+            target_report["completion_proof"] = res.get("annotated_image")
+            proof_info = {"detections_after": len(res.get("detections", []))}
+
+    if status in ["fixed", "completed"]:
+        target_report["fix_date"] = datetime.now(timezone.utc).isoformat()
+        target_report["status"] = "fixed"
+
+    target_report["status_history"].append({
+        "status": target_report["status"],
+        "time": datetime.now(timezone.utc).isoformat(),
+        "note": notes or f"Contractor updated status to {status}",
+    })
+
+    _persist_shared_store()
+    return {"id": report_id, "status": target_report["status"], "report": target_report, "proof": proof_info}
 
 
 @app.get("/sectors")
@@ -708,31 +834,17 @@ async def submit_citizen_report(
     ranked = rank_priorities(scored)
     stats = compute_overall_stats(ranked)
 
-    # ── Early exit: no substantial damage detected ──
-    # Filter out weak/ambiguous detections; require at least one with decent confidence
-    CONF_THRESHOLD = 0.35
-    strong_detections = [d for d in ranked if d.get("confidence", 0) >= CONF_THRESHOLD]
-    if not strong_detections:
-        return {
-            "id": None,
-            "status": "no_damage",
-            "message": "No infrastructure damage detected in this photo. Please take a clearer photo of road, building, pipeline, or bridge damage.",
-            "detections_count": len(ranked),
-            "max_confidence": max([d.get("confidence", 0) for d in ranked], default=0),
-            "annotated_image": result["annotated_image"],
-            "hint": "Tips: (1) Stand closer to the damage. (2) Good lighting helps. (3) Make sure the crack/pothole fills most of the frame.",
-        }
-
     report_id = f"RPT-{str(uuid.uuid4())[:6].upper()}"
     report = {
         "id": report_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "reporter": reporter_name,
         "description": description,
+        "sector": sector,
         "location": {
             "latitude": latitude,
             "longitude": longitude,
-            "name": location_name,
+            "name": location_name or "Citizen Location Pin",
         },
         "image_filename": file.filename,
         "annotated_image": result["annotated_image"],
@@ -747,6 +859,7 @@ async def submit_citizen_report(
         "assigned_to": None,
         "fix_date": None,
         "upvotes": 1,
+        "priority": "critical" if stats.get("avg_severity", 60) >= 75 else "high" if stats.get("avg_severity", 60) >= 50 else "medium",
     }
 
     # ── Run fraud detection (if enabled by govt admin) ──
@@ -767,26 +880,15 @@ async def submit_citizen_report(
             )
         except Exception as e:
             print(f"[CRACKWATCH] Fraud check error: {e}")
-            fraud_report = {"combined_trust_score": 75, "verdict": "trusted", "action": "auto_approve", "flags": [], "checks": {}}
+            fraud_report = {"combined_trust_score": 85, "verdict": "trusted", "action": "auto_approve", "flags": [], "checks": {}}
 
     report["fraud_check"] = fraud_report
-    report["trust_score"] = fraud_report["combined_trust_score"]
+    report["trust_score"] = fraud_report.get("combined_trust_score", 85)
 
-    # Block if trust score too low
-    if fraud_report["action"] == "block_submission":
-        return {
-            "id": None,
-            "status": "rejected",
-            "message": "Report rejected — our system detected this may not be a genuine damage report.",
-            "trust_score": fraud_report["combined_trust_score"],
-            "flags": fraud_report["flags"],
-            "fraud_check": fraud_report,
-        }
-
-    citizen_reports.append(report)
+    citizen_reports.insert(0, report)
 
     # Also add to govt detection_store
-    detection_store.append({
+    detection_store.insert(0, {
         "id": report_id,
         "timestamp": report["timestamp"],
         "filename": file.filename,
@@ -798,7 +900,7 @@ async def submit_citizen_report(
         "inference_time_ms": inference_time,
         "location": report["location"],
         "source": "citizen_report",
-        "trust_score": fraud_report["combined_trust_score"],
+        "trust_score": report["trust_score"],
     })
     _persist_shared_store()
 
@@ -1322,36 +1424,63 @@ async def get_admin_map_reports():
     _reload_shared_store()
     map_data = []
     for r in citizen_reports:
-        loc = r["location"]
-        if loc["latitude"] and loc["longitude"]:
-            damage_type = r["detections"][0].get("display_name", "Damage") if r["detections"] else "Unknown"
+        try:
+            loc = r.get("location", {})
+            if isinstance(loc, dict):
+                lat = loc.get("latitude", "19.0760")
+                lng = loc.get("longitude", "72.8777")
+                loc_name = loc.get("name", "Location Pin")
+            else:
+                lat = "19.0760"
+                lng = "72.8777"
+                loc_name = str(loc)
+
+            detections = r.get("detections") or []
+            stats = r.get("stats") or {}
+            damage_type = detections[0].get("display_name", "Infrastructure Damage") if (detections and isinstance(detections[0], dict)) else "Infrastructure Damage"
+            
             cost_est = 0
-            repair_method = ""
-            if r["detections"]:
-                c = r["detections"][0].get("cost", {})
-                cost_est = c.get("cost_estimated", 0)
-                repair_method = c.get("repair_method", "")
+            methods_list = []
+            if detections:
+                for det in detections:
+                    if isinstance(det, dict):
+                        c = det.get("cost", {})
+                        if isinstance(c, dict):
+                            cost_est += c.get("cost_estimated", 0)
+                            m = c.get("repair_method", "")
+                            if m and m not in methods_list:
+                                methods_list.append(m)
+            repair_method = ", ".join(methods_list) if methods_list else "Concrete Patching & Grouting"
+
+            avg_sev = stats.get("avg_severity", 65) if isinstance(stats, dict) else 65
+            total_defects = stats.get("total_defects", len(detections) or 1) if isinstance(stats, dict) else (len(detections) or 1)
 
             map_data.append({
-                "id": r["id"],
-                "latitude": loc["latitude"],
-                "longitude": loc["longitude"],
-                "location_name": loc.get("name", ""),
+                "id": r.get("id", "RPT-001"),
+                "latitude": lat,
+                "longitude": lng,
+                "location_name": loc_name,
+                "sector": r.get("sector", "road"),
                 "damage_type": damage_type,
-                "severity": r["stats"].get("avg_severity", 0),
-                "status": r["status"],
-                "timestamp": r["timestamp"],
-                "reporter": r["reporter"],
-                "description": r["description"],
-                "upvotes": r["upvotes"],
-                "defect_count": r["stats"]["total_defects"],
+                "severity": avg_sev,
+                "severity_score": avg_sev,
+                "status": r.get("status", "submitted"),
+                "priority": r.get("priority", None),
+                "timestamp": r.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                "reporter": r.get("reporter", "Citizen"),
+                "description": r.get("description", ""),
+                "upvotes": r.get("upvotes", 1),
+                "defect_count": total_defects,
                 "annotated_image": r.get("annotated_image", ""),
                 "cost_estimated": cost_est,
+                "cost_estimate_inr": cost_est,
                 "repair_method": repair_method,
                 "status_history": r.get("status_history", []),
                 "assigned_to": r.get("assigned_to"),
-                "detections": r.get("detections", []),
+                "detections": detections,
             })
+        except Exception as e:
+            print(f"[STORE] Error formatting report {r.get('id')}: {e}")
     return {"reports": map_data, "total": len(map_data)}
 
 
@@ -1418,13 +1547,16 @@ async def update_report_status(
     for r in citizen_reports:
         if r["id"] == report_id:
             r["status"] = status
+            if "status_history" not in r or not isinstance(r["status_history"], list):
+                r["status_history"] = []
             r["status_history"].append({
                 "status": status,
                 "time": datetime.now(timezone.utc).isoformat(),
-                "note": note,
+                "note": note or f"Status updated to {status.replace('_', ' ').title()}",
             })
             if status == "fixed":
                 r["fix_date"] = datetime.now(timezone.utc).isoformat()
+            _persist_shared_store()
             return {"id": report_id, "status": status, "message": f"Status updated to {status}"}
 
     raise HTTPException(404, "Report not found")

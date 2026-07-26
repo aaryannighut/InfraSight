@@ -135,7 +135,7 @@ export default function ScanZone() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [annotatedImage, setAnnotatedImage] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [sector, setSector] = useState(null);
+  const [sector, setSector] = useState("all");
   const [scanProgress, setScanProgress] = useState(0);
   const [results, setResults] = useState(null);
   const [scanPhase, setScanPhase] = useState("");

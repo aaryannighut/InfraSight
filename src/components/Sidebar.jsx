@@ -12,10 +12,16 @@ import {
   Shield,
   MapPin,
   Video,
+  ClipboardList,
+  ListOrdered,
+  UserPlus
 } from "lucide-react";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", id: "dashboard" },
+  { icon: LayoutDashboard, label: "Command Center", id: "dashboard" },
+  { icon: ClipboardList, label: "Incoming Reports", id: "inspector-reports" },
+  { icon: ListOrdered, label: "Priority Queue", id: "priority-queue" },
+  { icon: UserPlus, label: "Contractors", id: "contractor-register" },
   { icon: Upload, label: "New Scan", id: "scan" },
   { icon: Video, label: "Video / Live", id: "video" },
   { icon: MapPin, label: "Reports Map", id: "govt-map" },

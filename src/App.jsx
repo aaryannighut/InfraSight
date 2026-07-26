@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Sidebar from "@/components/Sidebar";
@@ -15,6 +15,7 @@ import SettingsPage from "@/components/SettingsPage";
 import AdvancedAnalytics from "@/components/AdvancedAnalytics";
 import CitizenView from "@/components/CitizenView";
 import InspectorView from "@/components/InspectorView";
+import ContractorView from "@/components/ContractorView";
 import {
   Bell,
   Search,
@@ -22,11 +23,47 @@ import {
   ScanLine,
 } from "lucide-react";
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("React ErrorBoundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-2xl m-4 space-y-3">
+          <h2 className="text-lg font-bold text-red-400">Something went wrong loading this view</h2>
+          <p className="text-xs text-white/50">{this.state.error?.toString()}</p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="px-4 py-2 bg-red-500/20 text-red-300 rounded-xl text-xs font-bold hover:bg-red-500/30 transition-all"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function Header({ activeTab, user, onLogout }) {
   const [searchFocused, setSearchFocused] = useState(false);
 
   const titles = {
     dashboard: { title: "Command Center", sub: "Infrastructure monitoring & damage intelligence" },
+    "inspector-reports": { title: "Incoming Citizen Reports", sub: "Review citizen complaints & verify AI detections" },
+    "priority-queue": { title: "Priority Work Queue", sub: "Filter complaints by urgency level or cost & inspect details on right" },
+    "contractor-register": { title: "Contractor Portal", sub: "Register contractor credentials for field work orders" },
     scan: { title: "New Scan", sub: "Upload & analyze structural damage" },
     video: { title: "Video / Live Feed", sub: "Analyze video footage & real-time camera" },
     "govt-map": { title: "Reports Map", sub: "Citizen reports & admin controls" },
@@ -137,39 +174,56 @@ function Dashboard({ activeTab, setActiveTab, user, onLogout }) {
       <main className="flex-1 flex flex-col overflow-hidden relative">
         <Header activeTab={activeTab} user={user} onLogout={onLogout} />
         <div className={`flex-1 overflow-y-auto ${activeTab === 'govt-map' ? '' : 'p-6'}`}>
-          <AnimatePresence mode="wait">
-            {activeTab === "dashboard" && <DashboardView key="dashboard" />}
-            {activeTab === "scan" && (
-              <motion.div key="scan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <ScanZone />
-              </motion.div>
-            )}
-            {activeTab === "video" && (
-              <motion.div key="video" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <VideoScan />
-              </motion.div>
-            )}
-            {activeTab === "analytics" && (
-              <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <AdvancedAnalytics />
-              </motion.div>
-            )}
-            {activeTab === "govt-map" && (
-              <motion.div key="govt-map" className="h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <GovtMap />
-              </motion.div>
-            )}
-            {activeTab === "repair-plan" && (
-              <motion.div key="repair-plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <RepairPlan />
-              </motion.div>
-            )}
-            {activeTab === "settings" && (
-              <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <SettingsPage user={user} onLogout={onLogout} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <ErrorBoundary>
+            <AnimatePresence mode="wait">
+              {activeTab === "dashboard" && <DashboardView key="dashboard" />}
+              {activeTab === "inspector-reports" && (
+                <motion.div key="inspector-reports" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <InspectorView user={user} onLogout={onLogout} tabOnly="incoming" />
+                </motion.div>
+              )}
+              {activeTab === "priority-queue" && (
+                <motion.div key="priority-queue" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <InspectorView user={user} onLogout={onLogout} tabOnly="priority" />
+                </motion.div>
+              )}
+              {activeTab === "contractor-register" && (
+                <motion.div key="contractor-register" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <InspectorView user={user} onLogout={onLogout} tabOnly="contractors" />
+                </motion.div>
+              )}
+              {activeTab === "scan" && (
+                <motion.div key="scan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <ScanZone />
+                </motion.div>
+              )}
+              {activeTab === "video" && (
+                <motion.div key="video" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <VideoScan />
+                </motion.div>
+              )}
+              {activeTab === "analytics" && (
+                <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <AdvancedAnalytics />
+                </motion.div>
+              )}
+              {activeTab === "govt-map" && (
+                <motion.div key="govt-map" className="h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <GovtMap />
+                </motion.div>
+              )}
+              {activeTab === "repair-plan" && (
+                <motion.div key="repair-plan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <RepairPlan />
+                </motion.div>
+              )}
+              {activeTab === "settings" && (
+                <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <SettingsPage user={user} onLogout={onLogout} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </ErrorBoundary>
         </div>
       </main>
     </div>
@@ -177,21 +231,29 @@ function Dashboard({ activeTab, setActiveTab, user, onLogout }) {
 }
 
 // ── App state machine ─────────────────────────────────────────────────────
-// screen: "hero" → "login" → (role portal)
-// On logout → back to "hero"
-// If already logged in (localStorage session) → skip hero & login
-
 function App() {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("crackwatch_user");
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = sessionStorage.getItem("crackwatch_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
-  // "hero" | "login" | "dashboard"
-  const [screen, setScreen] = useState("hero");
+  const [screen, setScreen] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("crackwatch_user");
+      return saved ? "dashboard" : "hero";
+    } catch {
+      return "hero";
+    }
+  });
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const handleLogout = () => {
+    sessionStorage.removeItem("crackwatch_token");
+    sessionStorage.removeItem("crackwatch_user");
     localStorage.removeItem("crackwatch_token");
     localStorage.removeItem("crackwatch_user");
     setUser(null);
@@ -199,47 +261,43 @@ function App() {
   };
 
   const handleLogin = (data) => {
+    sessionStorage.setItem("crackwatch_token", data.token);
+    sessionStorage.setItem("crackwatch_user", JSON.stringify(data));
     setUser(data);
-    // admin gets hero → dashboard flow; others go direct to their portal
     setScreen("dashboard");
   };
 
-  // ── Already logged in: skip hero & login ─────────
-  if (user) {
-    // All roles now use the unified Dashboard (administration UI)
-
-    return (
-      <TooltipProvider>
-        <AnimatePresence mode="wait">
-          {screen === "hero" ? (
-            <motion.div key="hero" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+  return (
+    <ErrorBoundary>
+      {user ? (
+        user.role === "citizen" ? (
+          <CitizenView user={user} onLogout={handleLogout} />
+        ) : user.role === "contractor" ? (
+          <ContractorView user={user} onLogout={handleLogout} />
+        ) : (
+          <TooltipProvider>
+            {screen === "hero" ? (
               <HeroPage onEnter={() => setScreen("dashboard")} />
-            </motion.div>
-          ) : (
-            <motion.div key="dash" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            ) : (
               <Dashboard activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
+            )}
+          </TooltipProvider>
+        )
+      ) : (
+        <AnimatePresence mode="wait">
+          {screen === "hero" && (
+            <motion.div key="hero" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+              <HeroPage onEnter={() => setScreen("login")} />
+            </motion.div>
+          )}
+          {screen === "login" && (
+            <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
+              <LoginPage onLogin={handleLogin} onBack={() => setScreen("hero")} />
             </motion.div>
           )}
         </AnimatePresence>
-      </TooltipProvider>
-    );
-  }
-
-  // ── Not logged in: Hero → Login flow ─────────────
-  return (
-    <AnimatePresence mode="wait">
-      {screen === "hero" && (
-        <motion.div key="hero" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-          {/* onEnter = the "Sign In" / "Launch Dashboard" / "Tap to enter" clicks */}
-          <HeroPage onEnter={() => setScreen("login")} />
-        </motion.div>
       )}
-      {screen === "login" && (
-        <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }}>
-          <LoginPage onLogin={handleLogin} onBack={() => setScreen("hero")} />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </ErrorBoundary>
   );
 }
 

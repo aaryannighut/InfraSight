@@ -1,0 +1,26 @@
+{
+  "contractor": {
+    "password": "contractor123",
+    "role": "contractor",
+    "name": "Apex Infrastructure Ltd",
+    "company": "Apex Infrastructure Ltd",
+    "department": "Civil Contracting",
+    "username": "contractor"
+  },
+  "tech_build": {
+    "password": "pass123",
+    "role": "contractor",
+    "name": "TechBuild Infra",
+    "company": "TechBuild Corp",
+    "department": "Contracting Partner",
+    "username": "tech_build"
+  },
+  "rajesh": {
+    "password": "rajesh123",
+    "role": "contractor",
+    "name": "Rajesh Patil",
+    "company": "Rajesh pvt ltd",
+    "department": "Contracting Partner",
+    "username": "rajesh"
+  }
+}

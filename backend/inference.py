@@ -281,12 +281,12 @@ class DamageDetector:
         print("[CRACKWATCH] OpenCV supplementary detection: enabled")
         print(f"[CRACKWATCH] Multi-model pipeline ready: Road={'✓' if self.local_model else '✗'} | Building={'✓' if self.crack_model else '✗'} | CV=✓")
 
-    # Sector → model mapping
+    # Sector → model mapping (all models enabled across all sectors for comprehensive detection)
     SECTOR_MODELS = {
-        "road": {"yolo_road": True, "yolo_crack": False, "cv": False, "label": "Road & Highway"},
-        "building": {"yolo_road": False, "yolo_crack": True, "cv": "spalling_only", "label": "Building & Structure"},
-        "pipeline": {"yolo_road": False, "yolo_crack": False, "cv": True, "label": "Pipeline & Utility"},
-        "bridge": {"yolo_road": True, "yolo_crack": True, "cv": "spalling_only", "label": "Bridge & Flyover"},
+        "road": {"yolo_road": True, "yolo_crack": True, "cv": True, "label": "Road & Highway"},
+        "building": {"yolo_road": True, "yolo_crack": True, "cv": True, "label": "Building & Structure"},
+        "pipeline": {"yolo_road": True, "yolo_crack": True, "cv": True, "label": "Pipeline & Utility"},
+        "bridge": {"yolo_road": True, "yolo_crack": True, "cv": True, "label": "Bridge & Flyover"},
         "all": {"yolo_road": True, "yolo_crack": True, "cv": True, "label": "All Infrastructure"},
     }
 
