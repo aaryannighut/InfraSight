@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, User, ArrowRight, AlertTriangle, Shield, ChevronDown, UserCircle, Briefcase, Wrench, ArrowLeft } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const ROLE_META = {
   citizen: {

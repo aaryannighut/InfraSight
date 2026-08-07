@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Video, Play, Pause, StopCircle, Upload, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 function LiveCamera({ sector = "all" }) {
   const videoRef = useRef(null);

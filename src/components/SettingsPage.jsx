@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, LogOut, HardDrive, ShieldCheck, ShieldOff } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 export default function SettingsPage({ user, onLogout }) {
   const [fraudEnabled, setFraudEnabled] = useState(true);

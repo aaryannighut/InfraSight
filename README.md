@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛣️ CRACK**WATCH**
+# 🛣️ CRACK**WATCH** / INFRA**SIGHT**
 
 ### *AI-Powered Smart Infrastructure Command Center*
 
@@ -25,11 +25,11 @@
 > Last year in Maharashtra alone, **3,275 people died** because of potholes on Indian roads.
 > **73% of reported potholes are never fixed.** ₹33,000 crore is spent annually on road repairs, but manual inspection is slow, expensive, and dangerous.
 >
-> **CRACKWATCH** doesn't just detect damage — it **predicts when it will fail, estimates the repair cost, submits the report to authorities, and publicly ranks every contractor by negligence**.
+> **CRACKWATCH / INFRASIGHT** doesn't just detect damage — it **predicts when infrastructure will fail, estimates repair costs in INR, structures a complete 3-role workflow (Citizen ➔ Inspector ➔ Contractor), and publicly ranks contractors by accountability**.
 >
-> Citizens report via the PWA — or WhatsApp — in under 3 seconds.
-> Governments see the report on an inspector's map with AI-analyzed severity, cost, and a priority queue.
-> The public sees every unfixed pothole and which contractor is responsible.
+> Citizens report via the Web App or WhatsApp in under 3 seconds across 4 infrastructure categories (Roads, Buildings, Pipelines, Bridges).
+> Inspectors review AI detections, rank complaints in a Priority Queue, register contractor accounts, and assign work orders.
+> Contractors receive assigned tasks, update real-time progress, and upload repair proof photos for AI Before/After verification.
 >
 > **Detecting a pothole doesn't fix it. A watched government does.**
 
@@ -41,23 +41,23 @@
 <tr>
 <td width="33%" align="center">
 
-### 💬 WhatsApp Bot
-**Zero app install needed.**
-500M Indian WhatsApp users can report damage *right now*, no learning curve, no app store, no login.
+### 🔄 3-Role Workflow
+**Citizen ➔ Inspector ➔ Contractor**
+Complete end-to-end lifecycle. Citizens report, Inspectors prioritize and assign, Contractors repair and upload proof.
 
 </td>
 <td width="33%" align="center">
 
 ### 🤖 3-Model AI Pipeline
 **Fully offline, 757ms per image.**
-YOLOv8s-RDD + CrackSeg + OpenCV running in parallel. Zero cloud bills. Works when internet drops.
+YOLOv8s-RDD + CrackSeg + OpenCV running in parallel. Zero cloud bills. Works across 4 infrastructure sectors.
 
 </td>
 <td width="33%" align="center">
 
-### 🔥 Wall of Shame
-**Contractor accountability, publicly ranked.**
-Every unfixed report compounds their negligence score. Politicians don't want to be at the top.
+### 🏛️ Multi-Sector Support
+**Roads, Buildings, Pipelines, Bridges**
+Unified intelligence platform covering potholes, structural cracks, water pipe leaks, spalling, and bridge distress.
 
 </td>
 </tr>
@@ -66,7 +66,7 @@ Every unfixed report compounds their negligence score. Politicians don't want to
 
 ### 🔮 Predictive Engine
 **"This road fails in 18 days."**
-Monsoon-adjusted damage progression model. Shows cost delta if repair delayed.
+Monsoon-adjusted damage progression model. Shows cost delta if repair is delayed.
 
 </td>
 <td width="33%" align="center">
@@ -78,9 +78,9 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 </td>
 <td width="33%" align="center">
 
-### 🎮 Gamification Engine
-**Citizens compete to fix their city.**
-XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter leaderboard.
+### 💬 WhatsApp Bot
+**Zero app install needed.**
+500M Indian WhatsApp users can report damage *right now* via photo + location share with automated AI replies.
 
 </td>
 </tr>
@@ -88,11 +88,11 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & 3-Step Workflow
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          CRACKWATCH ECOSYSTEM                           │
+│                          INFRASIGHT ECOSYSTEM                           │
 │                                                                          │
 │   ┌──────────────┐     ┌──────────────┐     ┌────────────────┐          │
 │   │  Govt App    │     │  Citizen PWA │     │  WhatsApp Bot  │          │
@@ -127,61 +127,57 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Dual-backend design:**
-- **Port 8000 HTTPS** — serves frontends (mobile camera/GPS requires secure context)
-- **Port 8001 HTTP** — receives Twilio WhatsApp webhooks via ngrok
-- **Shared state** via `shared_store.json` (merge-on-read/write)
+### Complete 3-Step Infrastructure Workflow
+
+```
+┌─────────────────────────┐        ┌─────────────────────────┐        ┌─────────────────────────┐
+│ 1. Citizen              │        │ 2. Inspector            │        │ 3. Contractor           │
+│ • Select Sector         │ ──────►│ • Review Incoming Detections   │ ──────►│ • Login Credentials     │
+│ • Photo/Video Upload    │        │ • Set Priority Queue    │        │ • View Work Orders      │
+│ • AI Analysis Preview   │        │ • Register Contractor   │        │ • Update Status         │
+│ • Track Report Status   │        │ • Assign Work Order     │        │ • Upload Repair Proof   │
+└─────────────────────────┘        └─────────────────────────┘        └─────────────────────────┘
+```
 
 ---
 
 ## ✨ Complete Feature List
 
-### 🏛️ Government Command Center (Web Dashboard)
+### 📱 1. Citizen Portal / PWA
 
 | Feature | What It Does |
 |---------|--------------|
-| 🤖 **AI Damage Detection** | Upload an image → 3-model pipeline detects 10+ damage types in 757ms |
-| 📏 **Severity Scoring** | 0-100 composite score based on damage area × confidence × type weight |
-| 💰 **Cost Estimation** | INR estimates calibrated to CPWD 2023 Mumbai rates + repair method + crew size |
-| 📋 **Repair Plan Generator** | Priority-ranked daily action plan for inspectors |
-| 🗺️ **Reports Map** | Interactive Leaflet map with admin controls (mark fixed/in-progress) |
-| 🎥 **Video + Live Camera** | Frame-by-frame video analysis + live camera detection |
-| 🔮 **Predictive Analytics** | "This road fails in X days" with monsoon acceleration (2.5× Jun-Sep) |
-| 🔥 **Wall of Shame** | 6+ contractors ranked by negligence score |
-| ⚠️ **Priority Queue** | Top 5 urgent repairs with total cost projection |
-| 🏥 **City Health Score** | 0-100 rating per city with trend indicators |
-| 🔄 **Before/After** | Upload 2 images → AI computes improvement % |
-| 📊 **Smart Heatmap** | Geo-intensity visualization of damage severity |
-| 🛡️ **Fraud Controls** | Toggle 5-layer fraud detection on/off |
+| 🏗️ **4-Sector Selection** | Choose between 🛣️ **Roads**, 🏢 **Buildings**, 🚰 **Pipelines**, 🌉 **Bridges** |
+| 📸 **Photo & Video AI Scan** | Upload media → 3-model AI detects bounding boxes, severity %, and cost estimate in 757ms |
+| 📋 **My Reports Tracker** | Real-time card status showing progression (`Submitted` ➔ `In Priority Queue` ➔ `Assigned` ➔ `Fixed`) |
+| 🗺️ **Live Pothole Map** | Interactive Leaflet map color-coded by defect severity and status |
+| ⬆️ **Upvote System** | Community voting to highlight urgent local damage reports |
+| 🧭 **Pothole-Aware Navigation** | OSRM routing with safety scores, hazard markers, and "Avoid Potholes" toggle |
+| 🏆 **Gamification Engine** | Earn XP, Civic Coins, 13 achievement badges, daily streaks, and Pothole Hunter leaderboard |
+| 💬 **WhatsApp Integration** | Report damage directly from WhatsApp without app installation |
 
-### 📱 Public Citizen App (PWA)
+### 🏛️ 2. Inspector Command Center
 
 | Feature | What It Does |
 |---------|--------------|
-| 🗺️ **Live Pothole Map** | Real-time pins color-coded by status (unfixed/in-progress/fixed) |
-| 📸 **Photo + GPS Reporting** | Tap → photo → AI classifies → auto-GPS → submit in 3 taps |
-| ⬆️ **Upvote System** | Citizens vote which potholes matter most → priority re-rank |
-| 🧭 **Pothole-Aware Navigation** | OSRM routing with safety scores, hazard markers, "Avoid Potholes" toggle |
-| 🏆 **Pothole Hunter Leaderboard** | Top citizens by XP — gold/silver/bronze podium |
-| 🎖️ **13 Achievement Badges** | First Report → Road Warrior → City Saver → AI Master |
-| 💰 **Civic Coins** | Virtual currency earned from reports + verifications |
-| 🔥 **Daily/Weekly Streaks** | Bonus XP multipliers for consistent reporting |
-| 🧠 **AI Challenge Game** | Guess damage type from scenario description (+50 XP correct) |
-| 📊 **Transparency Dashboard** | Government performance score + fix rate + cost total |
-| 💬 **WhatsApp Integration** | Report directly from WhatsApp, no PWA needed |
-| 📱 **Phone-Frame Desktop** | Mobile-first design looks like a phone on desktop |
+| 📥 **Incoming Complaints** | Review incoming photo & video reports submitted by citizens across all 4 sectors |
+| 🔍 **AI Verification Tool** | Inspect bounding boxes, severity score, image trust score, and fraud checks |
+| ⚠️ **Priority Queue Manager** | Structure complaints into ranked priority queues (*Critical*, *High*, *Medium*, *Low*) |
+| 👷 **Contractor Registration** | Register contractor accounts with Name, Company/Agency, Username, and Password |
+| 📌 **Work Order Assignment** | Dispatch verified priority reports to registered contractors with target dates and notes |
+| 🗺️ **Inspector Control Map** | Map view showing all active, assigned, and resolved infrastructure reports |
+| 📊 **Advanced Analytics** | Access City Health Scores, Wall of Shame, Smart Heatmap, and Predictive Forecasts |
+| 🛡️ **System & Fraud Settings** | Toggle 5-layer fraud detection and system parameters on/off |
 
-### 💬 WhatsApp Bot (Twilio)
+### 👷 3. Contractor Portal
 
 | Feature | What It Does |
 |---------|--------------|
-| 🚀 **Zero-Install Reporting** | Send photo → get AI analysis in 3 seconds |
-| 🔄 **Two-Step Conversation** | Stateful flow: photo first, then location share |
-| 📍 **Native Location Share** | Uses WhatsApp's native location picker for accurate GPS |
-| 🤖 **AI Reply** | Damage type + severity + cost + gamification rewards |
-| 🛡️ **No-Damage Guard** | Clean photos rejected with tips (not auto-approved) |
-| ⏱️ **15-min Session Expiry** | Prevents stale photo + fresh location mismatch |
-| 🎮 **Gamification in Chat** | XP, coins, new badge notifications in reply message |
+| 🔑 **Role-Based Auth** | Secure login using Inspector-generated credentials |
+| 📋 **Assigned Work Orders** | View assigned repair jobs with priority badges, location, cost allocation, and deadlines |
+| 🔄 **Status Progress Drawer** | Update job status sequentially (`Work Assigned` ➔ `In Progress` ➔ `Submitted Proof`) |
+| 📸 **Proof of Fix Upload** | Upload "After Repair" photo for AI verification before task completion |
+| 📊 **Performance Metrics** | Track active assignments, completed repair count, and efficiency stats |
 
 ---
 
@@ -203,15 +199,14 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 - **FastAPI 0.115** — Async ASGI framework
 - **Uvicorn 0.30** — ASGI server with HTTPS
 - **Pillow** — Image decoding + EXIF extraction
-- **httpx** — Async HTTP client
 - **python-dotenv** — Credentials management
 - **Twilio SDK 9.3** — WhatsApp integration
-- **JWT** — Stateless auth (PyJWT)
+- **JWT** — Stateless role-based authentication
 
 </td>
 <td valign="top" width="50%">
 
-### 🎨 Frontend (Govt Dashboard)
+### 🎨 Frontend (Main App)
 - **React 19** + **Vite 8**
 - **Tailwind CSS v4** (via `@tailwindcss/vite`)
 - **shadcn/ui** component primitives
@@ -221,17 +216,15 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 - **Lucide React** — Icons
 - **Space Grotesk + Geist** — Typography
 
-### 📱 Frontend (Public PWA)
+### 📱 Frontend (Public Citizen PWA)
 - **React 19** + **Vite 8**
 - **Leaflet Routing Machine** (OSRM) — Pothole-aware nav
 - **Framer Motion** — Phone-frame animations
-- Progressive Web App (installable)
 
 ### 🔌 Integrations
 - **Twilio WhatsApp Sandbox** — Messaging platform
 - **ngrok** — HTTPS tunnel for webhooks
-- **OpenStreetMap / Nominatim** — Geocoding (free)
-- **OSRM** — Free routing engine
+- **OpenStreetMap / Nominatim** — Geocoding
 
 </td>
 </tr>
@@ -246,8 +239,6 @@ XP, Civic Coins, 13 badges, daily streaks, AI Challenge game, Pothole Hunter lea
 - **Python 3.12+**
 - **Node.js 20+**
 - **Git**
-- (Optional) **ngrok** for WhatsApp webhook
-- (Optional) **Twilio account** (free trial) for WhatsApp
 
 ### 1. Clone the Repo
 
@@ -266,7 +257,7 @@ pip install -r requirements.txt
 ### 3. Install Frontend Dependencies
 
 ```bash
-# Govt Dashboard
+# Main App
 cd ..
 npm install
 
@@ -276,334 +267,117 @@ npm install
 cd ..
 ```
 
-### 4. (Optional) Generate SSL Certs for Mobile Testing
+### 4. Configure Environment
 
 ```bash
-# Using mkcert (recommended)
-mkcert -install
-mkcert -cert-file certs/cert.pem -key-file certs/key.pem localhost 127.0.0.1 <your-lan-ip>
-
-# Copy to backend too (for the API)
-cp certs/cert.pem backend/cert.pem
-cp certs/key.pem backend/key.pem
-```
-
-### 5. Configure Environment
-
-```bash
-# crackwatch/.env
-VITE_API_URL=https://<your-lan-ip>:8000
+# .env (Main App)
+VITE_API_URL=
 
 # public-app/.env
-VITE_API_URL=https://<your-lan-ip>:8000
+VITE_API_URL=
 
-# backend/.env  (for WhatsApp)
+# backend/.env (for WhatsApp)
 TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxx
 TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxx
 TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```
 
-### 6. Run Everything
+### 5. Run Everything
 
 ```bash
-# Terminal 1 — Backend (HTTPS, for frontend)
+# Terminal 1 — FastAPI Backend (HTTPS)
 cd backend
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 \
   --ssl-keyfile key.pem --ssl-certfile cert.pem
 
-# Terminal 2 — Backend (HTTP, for WhatsApp via ngrok)
-cd backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8001
+# Terminal 2 — Main Command Center App
+npm run dev                # → https://localhost:5173
 
-# Terminal 3 — Govt Dashboard
-npm run dev                # → https://<your-ip>:5173
-
-# Terminal 4 — Public PWA
+# Terminal 3 — Public Citizen PWA
 cd public-app
-npm run dev                # → https://<your-ip>:5175
-
-# Terminal 5 — ngrok (for WhatsApp)
-ngrok http http://localhost:8001
-# Copy the https://*.ngrok-free.app URL to Twilio Sandbox webhook
-```
-
-### 7. (Optional) Seed Demo Data
-
-```bash
-# 20 reports from real images across Mumbai + Navi Mumbai
-cd backend
-PYTHONIOENCODING=utf-8 python seed_from_images.py
-
-# 10 gamification demo users
-curl -k -X POST https://localhost:8000/gamification/seed-demo
+npm run dev                # → https://localhost:5175
 ```
 
 ---
 
 ## 🔐 Demo Credentials
 
-| Role | Username | Password | What You Get |
-|------|----------|----------|--------------|
-| 🏛️ Government Inspector | `admin` | `admin123` | Full govt dashboard + admin controls |
-| 🏛️ Municipal Officer | `inspector` | `inspect123` | Same as admin, different name |
-| 🏛️ NHAI Engineer | `engineer` | `eng123` | Same as admin, different name |
-| 📱 Demo Citizen | `saud` | `123` | Pre-seeded profile: Lv.6, 3200 XP, 10 badges, 21-day streak, #1 leaderboard |
-| 📱 Anonymous Citizen | *any name* | *blank* | Fresh account, starts at 0 XP |
+| Role | Username | Password | Access & Capabilities |
+|------|----------|----------|-----------------------|
+| 🏛️ **Inspector** | `inspector` | `inspector123` | Full Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders) |
+| 🏛️ **Inspector (Admin)** | `admin` | `admin123` | Full Inspector Command Center & System Settings |
+| 👷 **Contractor** | `contractor` | `contractor123` | Contractor Portal (View assigned tasks, update status, upload repair proof) |
+| 📱 **Citizen (Demo)** | `citizen` | `citizen123` | Citizen Portal across 4 sectors + report tracking |
+| 📱 **Citizen (Pre-seeded)** | `saud` | `123` | Gamified citizen account (Lv.6, 3200 XP, 10 badges, #1 leaderboard) |
 
 ---
 
 ## 📖 API Reference
 
-### Authentication
+### Authentication & Contractor Management
 ```
-POST /auth/login              Government or citizen login → JWT
-POST /auth/register           Anonymous citizen registration
-GET  /auth/me                 Verify token
+POST /auth/login                 Role-based login (Citizen, Inspector, Contractor) → JWT
+POST /auth/register              Citizen registration
+POST /auth/register-contractor   Inspector registers a new contractor account
+GET  /auth/me                    Verify token & return user payload
+GET  /inspector/contractors      Inspector fetches all registered contractors
 ```
 
-### Detection
+### Work Order & Contractor Assignment
 ```
-POST /detect                  Image upload → full AI pipeline
-POST /detect/video            Video frame-by-frame analysis
-POST /detect/frame            Single base64 frame (live camera)
-GET  /sectors                 Available detection sectors
+POST /inspector/assign-work            Inspector assigns report to contractor with priority & target date
+GET  /contractor/tasks                 Contractor fetches assigned work orders
+POST /contractor/tasks/{id}/status     Contractor updates status & uploads repair proof image
+```
+
+### AI Detection & Sectors
+```
+POST /detect                     Upload image → 3-model AI pipeline (Road, Building, Pipeline, Bridge)
+POST /detect/video               Video frame-by-frame AI analysis
+POST /detect/frame               Single base64 frame (live camera stream)
+GET  /sectors                    List available infrastructure sectors
 ```
 
 ### Citizen Reports
 ```
-POST /public/report                Submit citizen report (photo + GPS)
-GET  /public/reports/map           Lightweight map pins
-GET  /public/reports/map/detail    Full reports with images
-GET  /public/reports/{id}          Single report
-POST /public/reports/{id}/upvote   Upvote a report
+POST /public/report                Submit citizen report (photo/video + GPS)
+GET  /public/reports/map           Lightweight map pin data
+GET  /public/reports/map/detail    Full reports with image data
+GET  /public/reports/{id}          Single report detail
+POST /public/reports/{id}/upvote   Upvote a citizen report
 ```
 
-### Admin
+### Analytics & System Settings
 ```
-GET  /admin/reports/map            Govt reports with admin fields
-PATCH /admin/reports/{id}/status   Change status (submitted/in_progress/fixed)
+GET  /analytics/wall-of-shame       Contractor accountability leaderboard
+GET  /analytics/heatmap             Geo-intensity damage map points
+GET  /analytics/priority-queue      Top urgent repairs queue
+GET  /analytics/city-health         Per-city health scores
+GET  /analytics/forecast            Predictive maintenance forecast
+POST /analytics/before-after       Compare before & after repair images
 GET  /admin/settings               Read system settings
 PATCH /admin/settings              Toggle fraud detection
-POST /admin/reports/seed-demo      Seed demo reports
 ```
 
-### Advanced Analytics
+### Gamification & WhatsApp
 ```
-GET /analytics/wall-of-shame       Contractor leaderboard
-GET /analytics/heatmap             Geo-intensity points
-GET /analytics/priority-queue      Top 5 urgent repairs
-GET /analytics/city-health         Per-city health scores
-GET /analytics/forecast            Predictive maintenance forecast
-POST /analytics/before-after       Compare before/after images
+GET  /gamification/leaderboard     Top citizen leaderboard
+GET  /gamification/profile/{id}    User profile & achievements
+POST /whatsapp/webhook             Twilio incoming WhatsApp webhook
 ```
-
-### Gamification
-```
-GET  /gamification/leaderboard           Top 20 XP holders
-GET  /gamification/profile/{user_id}     Full user profile
-GET  /gamification/challenges/{user_id}  Daily quests
-POST /gamification/verify                Community vote on report
-GET  /gamification/ai-challenge          Random scenario
-POST /gamification/ai-challenge/answer   Submit guess
-GET  /gamification/achievements          All badges
-POST /gamification/seed-demo             Seed 10 demo users
-```
-
-### WhatsApp
-```
-POST /whatsapp/webhook          Twilio incoming-message handler
-```
-
-### Repair Plan
-```
-POST /repair-plan/generate      Priority-ranked daily plan
-GET  /repair-plan/explain/{id}  Explainable AI breakdown
-```
-
----
-
-## 💬 WhatsApp Bot Setup
-
-### 1. Twilio Sandbox (Free)
-
-1. Sign up at https://www.twilio.com/try-twilio (free, no credit card)
-2. Navigate to **Messaging → Try it out → Send a WhatsApp message**
-3. Note your **sandbox number** (`+1 415 523 8886`) and **join code**
-
-### 2. Configure Webhook
-
-1. Run `ngrok http http://localhost:8001` — copy the forwarding URL
-2. In Twilio Sandbox → **Sandbox settings**:
-   - **When a message comes in:** `https://your-ngrok.ngrok-free.app/whatsapp/webhook`
-   - **Method:** HTTP POST
-   - Save
-
-### 3. Opt In Any Phone
-
-From any WhatsApp:
-```
-join your-sandbox-code
-```
-to `+1 415 523 8886`
-
-### 4. Report Damage via WhatsApp
-
-1. Send a photo of damage
-2. Bot replies: *"📸 Got your photo! Now tap 📎 → Location → Send current location"*
-3. Share your location via WhatsApp's attachment menu
-4. Bot replies with AI analysis, cost, repair method, XP earned
-
----
-
-## 🎯 Key Design Decisions
-
-<details>
-<summary><b>Why local YOLO, not cloud inference?</b></summary>
-
-Zero cloud bills. Sub-second latency. Works offline. Critical for rural India where connectivity is inconsistent. Municipalities can deploy on a ₹30K laptop with no recurring costs.
-</details>
-
-<details>
-<summary><b>Why two uvicorn processes (HTTPS + HTTP)?</b></summary>
-
-Frontend requires HTTPS for mobile camera/GPS (browser security). ngrok free tier can't verify self-signed upstream TLS, so Twilio webhooks need plain HTTP. Solved with a shared `shared_store.json` for cross-process state.
-</details>
-
-<details>
-<summary><b>Why WhatsApp instead of another chat platform?</b></summary>
-
-500M+ monthly active users in India. Zero install friction. Works on feature phones via WhatsApp Lite. Citizens already know how to send photos. No "why should I install your app?" barrier.
-</details>
-
-<details>
-<summary><b>Why YOLOv8 and not newer models like YOLOv11?</b></summary>
-
-YOLOv8s-RDD has pre-trained weights on RDD2022 (4.8K Indian road images). A newer architecture without domain-specific training scores ~14 percentage points lower on Indian damage. "Newer ≠ better" when domain data matters.
-</details>
-
-<details>
-<summary><b>Why in-memory state instead of PostgreSQL?</b></summary>
-
-Hackathon velocity. Every feature ships in 30 minutes because there's no migration overhead. `shared_store.json` adds persistence + cross-process sync. Production would use PostgreSQL + PostGIS for geo-queries.
-</details>
-
-<details>
-<summary><b>Why rule-based cost estimation, not ML?</b></summary>
-
-Explainability. Inspectors need to defend budget allocations. A rule-based engine calibrated to CPWD 2023 rates gives line-item accountability. ML would be a black box no government will approve.
-</details>
-
----
-
-## 📊 Performance Metrics
-
-| Metric | Value | Context |
-|--------|-------|---------|
-| YOLO inference time | **~500ms** | CPU only, no GPU |
-| Full pipeline latency | **~757ms** | YOLO + CrackSeg + OpenCV + annotation |
-| WhatsApp round-trip | **~3 seconds** | User's photo → bot reply |
-| Reports on map load | **~50ms** | 20 reports with base64 images |
-| Fraud check time | **~200ms** | Mostly Laplacian + FFT |
-| Memory footprint | **~1.2 GB** | Per uvicorn process (YOLO weights) |
-| Inference accuracy | **72.6% mAP** | YOLOv8s-RDD on RDD2022 test set |
-
----
-
-## 🎯 Roadmap
-
-### ✅ Shipped (v1.0.0 → v3.6.2)
-- Core AI pipeline (3 models)
-- Dual-platform (Govt + Citizen)
-- WhatsApp integration with stateful conversations
-- Gamification (13 badges, leaderboard, AI challenge)
-- 5-layer fraud detection
-- Predictive maintenance engine
-- Wall of Shame with 6 contractors
-- Pothole-aware navigation
-- Demo-ready seed data (20 reports across Mumbai + Navi Mumbai)
-- 15-slide presentation deck
-
-### 🚧 Post-Hackathon (Backlog)
-- PostgreSQL + PostGIS migration
-- Real WhatsApp Business API (no sandbox join code)
-- Mobile native apps (React Native)
-- Offline-first sync queue
-- Multi-language (Hindi, Marathi)
-- UPI-based citizen crowdfunding ("fund this fix")
-- WebSocket real-time map updates
-- AR live-scan camera overlay
-- Voice note transcription (Whisper)
-- Municipal ERP integration (SAP, custom CPGRAMS bridges)
-
----
-
-## 🛡️ Security Notes
-
-### Hackathon-Safe Compromises
-- Passwords are plaintext in `auth.py` (would be bcrypt-hashed in prod)
-- JWT secret is hardcoded (would be env var + rotation)
-- CORS = `allow_origins=["*"]` (would be scoped to known frontends)
-- Rate limiting is in-memory (would need Redis for multi-worker)
-
-### Actually Production-Safe
-- ✅ XML escaping in TwiML replies
-- ✅ Fraud detection resilient to hostile users
-- ✅ Image authenticity resists screenshot attacks (moiré detection)
-- ✅ GPS bounds check rejects out-of-India coords
-- ✅ `.env`, `.pem`, and `shared_store.json` are gitignored
-- ✅ JWT tokens expire in 24h
-
----
-
-## 📚 Version History
-
-See [CHANGELOG.md](./CHANGELOG.md) — every release documented with bullet points.
-
-Highlights:
-- **v1.0.0** — Production release, dual platform
-- **v1.4.0** — 5-layer fraud detection
-- **v2.0.0** — Smart navigation with pothole avoidance
-- **v2.2.0** — Predictive maintenance engine
-- **v3.0.0** — Full gamification (12 features)
-- **v3.3.0** — `saud/123` demo account
-- **v3.4.0** — No-damage rejection
-- **v3.5.0** — WhatsApp bot
-- **v3.5.2** — Stateful WhatsApp two-step flow (photo + location)
-- **v3.6.0** — Presentation rebuild with groundbreaking features
-- **v3.6.1** — 20 AI-detected real-image reports across Mumbai
-- **v3.6.2** — Wall of Shame with 6 contractors
-
----
-
-
-### The One Line That Wins
-
-> **"Detecting a pothole doesn't fix it. A watched government does."**
 
 ---
 
 ## 📜 License
 
-MIT — Feel free to fork, adapt, and deploy to your own municipality. Open-source infrastructure accountability should be a public good.
-
----
-
-## 🙏 Acknowledgments
-
-- **RDD2022 Dataset** — Pre-trained YOLO weights
-- **HuggingFace** — Model hosting
-- **Twilio** — WhatsApp Sandbox (free tier)
-- **OpenStreetMap + OSRM** — Free mapping infrastructure
-- **Ultralytics** — YOLOv8 inference framework
-- Every pothole that inspired this build. May you never trip another commuter.
+MIT — Open-source infrastructure intelligence and accountability platform.
 
 ---
 
 <div align="center">
 
+*Detecting damage doesn't fix it. A watched government does.*
 
-*If this helped your city, a ⭐ on GitHub means the world.*
-
-[⬆ back to top](#-crackwatch)
+[⬆ back to top](#%EF%B8%8F-crackwatch--infrasight)
 
 </div>

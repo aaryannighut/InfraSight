@@ -19,5 +19,21 @@ export default defineConfig({
         key: fs.readFileSync(keyPath),
       }
     } : {}),
+    proxy: {
+      '/auth': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/detect': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/detections': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/stats': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/alerts': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/repair-plan': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/analytics': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/gamification': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/public': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/inspector': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/contractor': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/admin': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/sectors': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+      '/health': { target: 'https://localhost:8000', changeOrigin: true, secure: false },
+    }
   },
 })

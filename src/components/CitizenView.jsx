@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import GovtMap from "./GovtMap";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const CATEGORIES = [
   { id: "road", label: "Roads & Highways", icon: Waypoints, color: "#5de6ff", desc: "Potholes, cracks, rutting" },

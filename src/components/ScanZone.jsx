@@ -12,7 +12,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 function ScanLine({ isScanning }) {
   if (!isScanning) return null;

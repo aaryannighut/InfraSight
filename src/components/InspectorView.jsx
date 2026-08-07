@@ -7,7 +7,7 @@ import {
   Send, ShieldCheck, Sparkles, Building2, Wrench, Calendar, Plus, RefreshCw, Filter, ArrowUpDown, Camera
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const PRIORITY_META = {
   critical: { color: "#ff6b6b", label: "CRITICAL", bg: "bg-red-500/10", border: "border-red-500/30" },

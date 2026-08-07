@@ -6,7 +6,7 @@ import {
   ShieldCheck, Loader2, FileCheck, Building2, HardHat
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const STATUS_META = {
   assigned: { color: "#ffd76b", label: "Work Assigned", bg: "bg-yellow-500/10" },

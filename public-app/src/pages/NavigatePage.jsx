@@ -7,7 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 const DEMO_POTHOLES = [
   { id: 'P1', lat: 19.0330, lng: 73.0297, severity: 82, type: 'Pothole', status: 'submitted' },

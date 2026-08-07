@@ -8,7 +8,7 @@ import LiveScanPage from './pages/LiveScanPage';
 import NavigatePage from './pages/NavigatePage';
 import GamificationPage from './pages/GamificationPage';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 const tabs = [
   { id: 'map', label: 'Map', icon: MapPin },

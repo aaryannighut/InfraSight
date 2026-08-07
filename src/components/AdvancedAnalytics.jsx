@@ -5,7 +5,7 @@ import {
   Clock, DollarSign, Shield, BarChart3, Flame, Award, Minus,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 function WallOfShame({ data }) {
   if (!data?.leaderboard?.length) return <p className="text-sm text-zinc-500 text-center py-8">No contractor data yet. Submit reports to populate.</p>;

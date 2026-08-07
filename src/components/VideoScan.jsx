@@ -5,7 +5,7 @@ import {
   Loader2, AlertTriangle, CheckCircle, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 function FrameViewer({ frames, currentIndex, setCurrentIndex }) {
   const frame = frames[currentIndex];

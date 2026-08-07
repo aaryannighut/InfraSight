@@ -6,7 +6,7 @@ import { X, CheckCircle, Clock, AlertTriangle, Eye, ThumbsUp, MapPin, Hammer, Ca
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 const STATUS = {
   submitted:    { color: '#ff6b6b', label: 'Not Fixed',    bg: '#ff6b6b15' },

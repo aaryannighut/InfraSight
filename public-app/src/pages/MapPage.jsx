@@ -6,7 +6,7 @@ import { ThumbsUp, X, Navigation, AlertTriangle, Clock, CheckCircle, ChevronUp, 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 const STATUS = {
   submitted:    { color: '#ff6b6b', bg: '#ff6b6b15', label: 'Not Fixed',    icon: AlertTriangle, dot: '🔴' },
