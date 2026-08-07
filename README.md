@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛣️ CRACK**WATCH** / INFRA**SIGHT**
+# 🛣️ INFRA**SIGHT**
 
 ### *AI-Powered Smart Infrastructure Command Center*
 
