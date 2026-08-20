@@ -243,7 +243,7 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/aaryannighut/CrackZone.git
+git clone https://github.com/aaryannighut/InfraSight.git
 cd CrackZone
 ```
 
