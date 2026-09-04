@@ -18,6 +18,25 @@ const PRIORITY_META = {
 
 const PRIORITY_ORDER = { critical: 4, high: 3, medium: 2, low: 1 };
 
+const STAGES_LIST = [
+  { id: "dispatched", label: "1. Dispatched", icon: "🚚" },
+  { id: "under_review", label: "2. Site Prep", icon: "👀" },
+  { id: "in_progress", label: "3. Repairing", icon: "🛠️" },
+  { id: "quality_check", label: "4. Quality Audit", icon: "🧪" },
+  { id: "fixed", label: "5. Verified", icon: "✅" },
+];
+
+const getStageIndex = (status) => {
+  if (status === "assigned" || status === "pending") return 0;
+  if (status === "received") return 1;
+  if (status === "dispatched") return 1;
+  if (status === "under_review") return 2;
+  if (status === "in_progress") return 3;
+  if (status === "quality_check") return 4;
+  if (status === "fixed") return 5;
+  return 0;
+};
+
 export default function InspectorView({ user, onLogout, tabOnly }) {
   const [activeTab, setActiveTab] = useState("incoming");
   const currentTab = tabOnly || activeTab;
@@ -572,6 +591,236 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                     </motion.div>
                   );
                 })
+              )}
+            </motion.div>
+          )}
+
+          {/* TAB: ASSIGNED WORK DASHBOARD */}
+          {currentTab === "assigned" && (
+            <motion.div key="assigned" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Assigned Work Orders Dashboard</h2>
+                  <p className="text-xs text-white/40 mt-0.5">Track work dispatches across contractors and monitor contractor acceptance/decline decisions</p>
+                </div>
+                <button
+                  onClick={fetchData}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-white/70 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Refresh Statuses
+                </button>
+              </div>
+
+              {/* Stats Summary row */}
+              <div className="grid grid-cols-4 gap-4">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#5de6ff]/10 border border-[#5de6ff]/20 flex items-center justify-center">
+                    <ClipboardList className="w-5 h-5 text-[#5de6ff]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-white">
+                      {reports.filter(r => r.assigned_to).length}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Total Dispatched</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-emerald-400">
+                      {reports.filter(r => r.assigned_to && (r.contractor_decision === "received" || r.status === "received" || r.status === "in_progress")).length}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Accepted / Received</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <XCircle className="w-5 h-5 text-red-400" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-red-400">
+                      {reports.filter(r => r.assigned_to && (r.contractor_decision === "declined" || r.status === "declined")).length}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Declined Work</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#4edea3]/10 border border-[#4edea3]/20 flex items-center justify-center">
+                    <FileCheck className="w-5 h-5 text-[#4edea3]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-[#4edea3]">
+                      {reports.filter(r => r.assigned_to && r.status === "fixed").length}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Fixed & Closed</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* List of Assigned Reports */}
+              {reports.filter(r => r.assigned_to).length === 0 ? (
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-12 text-center">
+                  <Wrench className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                  <p className="text-white font-bold text-sm">No work orders currently assigned!</p>
+                  <p className="text-white/30 text-xs mt-1">Go to "Incoming Reports" or "Priority Queue" to assign work orders to contractors.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reports.filter(r => r.assigned_to).map((r, i) => {
+                    const decision = r.contractor_decision || (r.status === "assigned" ? "pending" : r.status);
+                    const cost = r.cost_estimated || 15000;
+
+                    return (
+                      <div key={r.id || i} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 space-y-4 hover:border-white/10 transition-all">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-base font-bold text-white">{r.location_name || r.location?.name || "Work Site Location"}</span>
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-white/10 text-white/70">
+                                ID: {r.id}
+                              </span>
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-yellow-500/10 text-yellow-300">
+                                Priority: {r.priority || "Medium"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-white/40">Defect: {r.damage_type || "Infrastructure Damage"}</p>
+                          </div>
+
+                          {/* Contractor Info & Decision Badge */}
+                          <div className="flex items-center gap-3 text-right">
+                            <div>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span className="text-xs font-bold text-white">Contractor:</span>
+                                <span className="text-xs font-mono text-[#ffd76b] font-bold">@{r.assigned_to}</span>
+                              </div>
+                              <div className="mt-1">
+                                {decision === "pending" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                                    ⏳ Pending Acceptance
+                                  </span>
+                                )}
+                                {decision === "declined" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-red-500/20 text-red-300 border border-red-500/30 inline-flex items-center gap-1">
+                                    <XCircle className="w-3.5 h-3.5" /> Work Order Declined
+                                  </span>
+                                )}
+                                {r.status === "dispatched" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 inline-flex items-center gap-1">
+                                    <Activity className="w-3.5 h-3.5" /> 🚚 Crew Dispatched
+                                  </span>
+                                )}
+                                {r.status === "under_review" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1">
+                                    <Activity className="w-3.5 h-3.5" /> 👀 Site Inspection & Prep
+                                  </span>
+                                )}
+                                {r.status === "in_progress" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 inline-flex items-center gap-1">
+                                    <Activity className="w-3.5 h-3.5 animate-pulse" /> 🛠️ Repair In Progress
+                                  </span>
+                                )}
+                                {r.status === "quality_check" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 inline-flex items-center gap-1">
+                                    <CheckCircle className="w-3.5 h-3.5" /> 🧪 Final Quality Audit
+                                  </span>
+                                )}
+                                {r.status === "fixed" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-[#4edea3]/20 text-[#4edea3] border border-[#4edea3]/30 inline-flex items-center gap-1">
+                                    <FileCheck className="w-3.5 h-3.5" /> ✅ Fixed & Verified
+                                  </span>
+                                )}
+                                {r.status === "received" && (
+                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
+                                    <CheckCircle className="w-3.5 h-3.5" /> Received / Accepted
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Re-assign button if declined */}
+                            {decision === "declined" && (
+                              <button
+                                onClick={() => setAssigningReport(r)}
+                                className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#ffd76b] to-[#ff9f43] text-black font-extrabold text-xs flex items-center gap-1 cursor-pointer"
+                              >
+                                Re-assign
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Image Preview if available */}
+                        {((typeof r.annotated_image === "string" && r.annotated_image) || r.image_filename) && (
+                          <div className="rounded-xl overflow-hidden border border-white/10 max-h-48 bg-zinc-950 flex justify-center p-2">
+                            <img
+                              src={
+                                (typeof r.annotated_image === "string" && r.annotated_image)
+                                  ? (r.annotated_image.startsWith("data:") || r.annotated_image.startsWith("http")
+                                      ? r.annotated_image
+                                      : `data:image/jpeg;base64,${r.annotated_image}`)
+                                  : `${API_URL}/uploads/${r.image_filename}`
+                              }
+                              alt="Work Order"
+                              className="h-full object-contain rounded-lg"
+                              onError={(e) => { e.currentTarget.style.display = "none"; }}
+                            />
+                          </div>
+                        )}
+
+                        {/* 5-Step Live Progress Tracker Bar for Inspector */}
+                        {decision !== "declined" && (
+                          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5 space-y-2">
+                            <div className="flex items-center justify-between text-[11px] font-bold text-white/70">
+                              <span className="flex items-center gap-1.5">
+                                <Activity className="w-3.5 h-3.5 text-[#5de6ff]" /> Real-time Contractor Field Progress
+                              </span>
+                              <span className="text-[#4edea3]">
+                                {getStageIndex(r.status) === 5
+                                  ? "All 5 Stages Completed"
+                                  : `Active Stage ${Math.max(1, getStageIndex(r.status))} of 5 (${Math.max(0, getStageIndex(r.status) - 1)} Completed)`}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-5 gap-1.5 pt-1">
+                              {STAGES_LIST.map((stg, idx) => {
+                                const stageNum = getStageIndex(r.status);
+                                const stepNum = idx + 1;
+                                const isDone = stageNum === 5 || stageNum > stepNum;
+                                const isCurrent = stageNum === stepNum && stageNum < 5;
+
+                                return (
+                                  <div
+                                    key={stg.id}
+                                    className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold flex flex-col items-center justify-center text-center transition-all ${
+                                      isDone
+                                        ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                                        : isCurrent
+                                        ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm shadow-cyan-500/20 animate-pulse"
+                                        : "bg-white/[0.02] border-white/[0.05] text-white/30"
+                                    }`}
+                                  >
+                                    <span>{stg.icon}</span>
+                                    <span className="truncate w-full mt-0.5">{stg.label}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Inspector status history / note */}
+                        <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs text-white/40">
+                          <span>Assigned Notes: {r.assignment_notes || "Standard municipal repair order"}</span>
+                          <span className="font-semibold text-[#4edea3]">Allocated Budget: ₹{cost.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </motion.div>
           )}

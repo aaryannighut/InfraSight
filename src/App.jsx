@@ -63,6 +63,7 @@ function Header({ activeTab, user, onLogout }) {
     dashboard: { title: "Command Center", sub: "Infrastructure monitoring & damage intelligence" },
     "inspector-reports": { title: "Incoming Citizen Reports", sub: "Review citizen complaints & verify AI detections" },
     "priority-queue": { title: "Priority Work Queue", sub: "Filter complaints by urgency level or cost & inspect details on right" },
+    "assigned-work": { title: "Assigned Work Dashboard", sub: "Monitor assigned tasks, contractor decisions & completion status" },
     "contractor-register": { title: "Contractor Portal", sub: "Register contractor credentials for field work orders" },
     scan: { title: "New Scan", sub: "Upload & analyze structural damage" },
     video: { title: "Video / Live Feed", sub: "Analyze video footage & real-time camera" },
@@ -185,6 +186,11 @@ function Dashboard({ activeTab, setActiveTab, user, onLogout }) {
               {activeTab === "priority-queue" && (
                 <motion.div key="priority-queue" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <InspectorView user={user} onLogout={onLogout} tabOnly="priority" />
+                </motion.div>
+              )}
+              {activeTab === "assigned-work" && (
+                <motion.div key="assigned-work" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <InspectorView user={user} onLogout={onLogout} tabOnly="assigned" />
                 </motion.div>
               )}
               {activeTab === "contractor-register" && (

@@ -211,6 +211,7 @@ async def assign_work(
     target_report["assignment_notes"] = notes
     target_report["target_date"] = target_date or datetime.now(timezone.utc).isoformat()
     target_report["status"] = "assigned"
+    target_report["contractor_decision"] = "pending"
     
     if "status_history" not in target_report:
         target_report["status_history"] = []
@@ -245,7 +246,7 @@ async def update_contractor_task_status(
     notes: str = Form(default=""),
     file: Optional[UploadFile] = File(default=None),
 ):
-    """Contractor updates job status (in_progress, fixed, completed) and uploads proof image."""
+    """Contractor updates job status (received, under_review, in_progress, fixed, declined) and uploads proof image."""
     target_report = None
     for r in citizen_reports:
         if r["id"] == report_id:
@@ -260,7 +261,29 @@ async def update_contractor_task_status(
     if not target_report:
         raise HTTPException(404, "Task not found")
 
-    target_report["status"] = status
+    status_clean = status.lower().strip()
+
+    if status_clean in ["received", "accepted", "dispatched"]:
+        target_report["status"] = status_clean if status_clean != "accepted" else "received"
+        target_report["contractor_decision"] = "received"
+    elif status_clean in ["declined", "rejected"]:
+        target_report["status"] = "declined"
+        target_report["contractor_decision"] = "declined"
+    elif status_clean in ["under_review", "site_prep"]:
+        target_report["status"] = "under_review"
+        target_report["contractor_decision"] = "received"
+    elif status_clean in ["in_progress", "quality_check"]:
+        target_report["status"] = status_clean
+        target_report["contractor_decision"] = "received"
+    elif status_clean in ["fixed", "completed"]:
+        target_report["status"] = "fixed"
+        target_report["contractor_decision"] = "completed"
+        target_report["fix_date"] = datetime.now(timezone.utc).isoformat()
+    else:
+        target_report["status"] = status_clean
+        if target_report.get("contractor_decision") == "pending":
+            target_report["contractor_decision"] = "received"
+
     if "status_history" not in target_report:
         target_report["status_history"] = []
 
@@ -273,18 +296,15 @@ async def update_contractor_task_status(
             target_report["completion_proof"] = res.get("annotated_image")
             proof_info = {"detections_after": len(res.get("detections", []))}
 
-    if status in ["fixed", "completed"]:
-        target_report["fix_date"] = datetime.now(timezone.utc).isoformat()
-        target_report["status"] = "fixed"
-
+    note_text = notes or f"Contractor updated status to {target_report['status']}"
     target_report["status_history"].append({
         "status": target_report["status"],
         "time": datetime.now(timezone.utc).isoformat(),
-        "note": notes or f"Contractor updated status to {status}",
+        "note": note_text,
     })
 
     _persist_shared_store()
-    return {"id": report_id, "status": target_report["status"], "report": target_report, "proof": proof_info}
+    return {"id": report_id, "status": target_report["status"], "contractor_decision": target_report.get("contractor_decision"), "report": target_report, "proof": proof_info}
 
 
 @app.get("/sectors")

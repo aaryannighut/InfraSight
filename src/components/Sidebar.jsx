@@ -14,13 +14,15 @@ import {
   Video,
   ClipboardList,
   ListOrdered,
-  UserPlus
+  UserPlus,
+  HardHat
 } from "lucide-react";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Command Center", id: "dashboard" },
   { icon: ClipboardList, label: "Incoming Reports", id: "inspector-reports" },
   { icon: ListOrdered, label: "Priority Queue", id: "priority-queue" },
+  { icon: HardHat, label: "Assigned Work", id: "assigned-work" },
   { icon: UserPlus, label: "Contractors", id: "contractor-register" },
   { icon: Upload, label: "New Scan", id: "scan" },
   { icon: Video, label: "Video / Live", id: "video" },
