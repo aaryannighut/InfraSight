@@ -193,8 +193,10 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
     return "low";
   };
 
-  const incomingReports = (reports || []).filter(r => r && (r.status === "submitted" || !r.status || r.status === "under_review"));
-  const priorityQueue = (reports || []).filter(r => r && r.id);
+  const incomingReports = (reports || []).filter(r => r && !r.assigned_to && r.status !== "fixed" && r.status !== "completed");
+  const priorityQueue = (reports || []).filter(r => r && !r.assigned_to && r.status !== "fixed" && r.status !== "completed");
+  const activeAssignedReports = (reports || []).filter(r => r && r.assigned_to && r.status !== "fixed" && r.status !== "completed");
+  const completedReports = (reports || []).filter(r => r && (r.status === "fixed" || r.status === "completed"));
 
   const filteredQueue = priorityQueue
     .filter((r) => {
@@ -226,6 +228,8 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
   const tabs = [
     { id: "incoming", label: "Incoming Reports", icon: ClipboardList, badge: incomingReports.length },
     { id: "priority", label: "Set Priority Queue", icon: ListOrdered, badge: priorityQueue.length },
+    { id: "assigned", label: "Active Assigned Work", icon: Wrench, badge: activeAssignedReports.length },
+    { id: "completed", label: "Completed Work", icon: CheckCircle, badge: completedReports.length },
     { id: "contractors", label: "Contractor Register", icon: UserPlus },
     { id: "profile", label: "Profile", icon: User },
   ];
@@ -595,13 +599,13 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
             </motion.div>
           )}
 
-          {/* TAB: ASSIGNED WORK DASHBOARD */}
+          {/* TAB: ASSIGNED WORK DASHBOARD (ACTIVE WORK ORDERS ONLY) */}
           {currentTab === "assigned" && (
             <motion.div key="assigned" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Assigned Work Orders Dashboard</h2>
-                  <p className="text-xs text-white/40 mt-0.5">Track work dispatches across contractors and monitor contractor acceptance/decline decisions</p>
+                  <h2 className="text-xl font-bold text-white">Active Work Orders Dashboard</h2>
+                  <p className="text-xs text-white/40 mt-0.5">Track active field dispatches across contractors (Completed jobs move to Completed Work)</p>
                 </div>
                 <button
                   onClick={fetchData}
@@ -619,9 +623,9 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-white">
-                      {reports.filter(r => r.assigned_to).length}
+                      {activeAssignedReports.length}
                     </span>
-                    <p className="text-[10px] text-white/40 font-semibold uppercase">Total Dispatched</p>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Active Dispatched</p>
                   </div>
                 </div>
 
@@ -631,9 +635,9 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-emerald-400">
-                      {reports.filter(r => r.assigned_to && (r.contractor_decision === "received" || r.status === "received" || r.status === "in_progress")).length}
+                      {activeAssignedReports.filter(r => r.contractor_decision === "received" || r.status === "received" || r.status === "in_progress" || r.status === "dispatched" || r.status === "under_review").length}
                     </span>
-                    <p className="text-[10px] text-white/40 font-semibold uppercase">Accepted / Received</p>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Accepted / In Field</p>
                   </div>
                 </div>
 
@@ -643,7 +647,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-red-400">
-                      {reports.filter(r => r.assigned_to && (r.contractor_decision === "declined" || r.status === "declined")).length}
+                      {activeAssignedReports.filter(r => r.contractor_decision === "declined" || r.status === "declined").length}
                     </span>
                     <p className="text-[10px] text-white/40 font-semibold uppercase">Declined Work</p>
                   </div>
@@ -655,23 +659,27 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-[#4edea3]">
-                      {reports.filter(r => r.assigned_to && r.status === "fixed").length}
+                      {completedReports.length}
                     </span>
-                    <p className="text-[10px] text-white/40 font-semibold uppercase">Fixed & Closed</p>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Fixed & Completed</p>
                   </div>
                 </div>
               </div>
 
-              {/* List of Assigned Reports */}
-              {reports.filter(r => r.assigned_to).length === 0 ? (
+              {/* List of Active Assigned Reports */}
+              {activeAssignedReports.length === 0 ? (
                 <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-12 text-center">
                   <Wrench className="w-10 h-10 text-white/20 mx-auto mb-3" />
-                  <p className="text-white font-bold text-sm">No work orders currently assigned!</p>
-                  <p className="text-white/30 text-xs mt-1">Go to "Incoming Reports" or "Priority Queue" to assign work orders to contractors.</p>
+                  <p className="text-white font-bold text-sm">No active work orders in progress!</p>
+                  <p className="text-white/30 text-xs mt-1">
+                    {completedReports.length > 0
+                      ? `${completedReports.length} work order(s) are completed in Completed Work. Go to "Incoming Reports" to assign new work.`
+                      : 'Go to "Incoming Reports" or "Priority Queue" to assign work orders to contractors.'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {reports.filter(r => r.assigned_to).map((r, i) => {
+                  {activeAssignedReports.map((r, i) => {
                     const decision = r.contractor_decision || (r.status === "assigned" ? "pending" : r.status);
                     const cost = r.cost_estimated || 15000;
 
@@ -729,11 +737,6 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                                     <CheckCircle className="w-3.5 h-3.5" /> 🧪 Final Quality Audit
                                   </span>
                                 )}
-                                {r.status === "fixed" && (
-                                  <span className="text-xs px-3 py-1 rounded-full font-bold bg-[#4edea3]/20 text-[#4edea3] border border-[#4edea3]/30 inline-flex items-center gap-1">
-                                    <FileCheck className="w-3.5 h-3.5" /> ✅ Fixed & Verified
-                                  </span>
-                                )}
                                 {r.status === "received" && (
                                   <span className="text-xs px-3 py-1 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-flex items-center gap-1">
                                     <CheckCircle className="w-3.5 h-3.5" /> Received / Accepted
@@ -780,17 +783,15 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                                 <Activity className="w-3.5 h-3.5 text-[#5de6ff]" /> Real-time Contractor Field Progress
                               </span>
                               <span className="text-[#4edea3]">
-                                {getStageIndex(r.status) === 5
-                                  ? "All 5 Stages Completed"
-                                  : `Active Stage ${Math.max(1, getStageIndex(r.status))} of 5 (${Math.max(0, getStageIndex(r.status) - 1)} Completed)`}
+                                Active Stage {Math.max(1, getStageIndex(r.status))} of 5 ({Math.max(0, getStageIndex(r.status) - 1)} Completed)
                               </span>
                             </div>
                             <div className="grid grid-cols-5 gap-1.5 pt-1">
                               {STAGES_LIST.map((stg, idx) => {
                                 const stageNum = getStageIndex(r.status);
                                 const stepNum = idx + 1;
-                                const isDone = stageNum === 5 || stageNum > stepNum;
-                                const isCurrent = stageNum === stepNum && stageNum < 5;
+                                const isDone = stageNum > stepNum;
+                                const isCurrent = stageNum === stepNum;
 
                                 return (
                                   <div
@@ -816,6 +817,141 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                         <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between text-xs text-white/40">
                           <span>Assigned Notes: {r.assignment_notes || "Standard municipal repair order"}</span>
                           <span className="font-semibold text-[#4edea3]">Allocated Budget: ₹{cost.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* TAB: COMPLETED WORK DASHBOARD */}
+          {currentTab === "completed" && (
+            <motion.div key="completed" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Completed & Verified Repairs</h2>
+                  <p className="text-xs text-white/40 mt-0.5">Archive of completed work orders, field completion proofs, and verified quality audits</p>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#4edea3]/10 text-[#4edea3] text-xs font-bold border border-[#4edea3]/20">
+                  {completedReports.length} Work Orders Completed
+                </span>
+              </div>
+
+              {/* Stats Summary row for Completed Work */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <FileCheck className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-emerald-400">
+                      {completedReports.length}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Total Closed Jobs</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#4edea3]/10 border border-[#4edea3]/20 flex items-center justify-center">
+                    <Wrench className="w-5 h-5 text-[#4edea3]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-white">
+                      ₹{completedReports.reduce((acc, r) => acc + (Number(r.cost_estimate_inr || r.cost_estimated) || 15000), 0).toLocaleString()}
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Total Municipal Spend</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#5de6ff]/10 border border-[#5de6ff]/20 flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-[#5de6ff]" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-extrabold text-[#5de6ff]">
+                      100%
+                    </span>
+                    <p className="text-[10px] text-white/40 font-semibold uppercase">Quality Audit Verified</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* List of Completed Reports */}
+              {completedReports.length === 0 ? (
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-12 text-center space-y-2">
+                  <CheckCircle className="w-10 h-10 text-[#4edea3]/40 mx-auto mb-2" />
+                  <p className="text-white/80 font-bold text-sm">No completed work orders yet</p>
+                  <p className="text-white/30 text-xs">Once contractors finish assigned repairs and mark them fixed, they will be archived here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {completedReports.map((r, i) => {
+                    const cost = r.cost_estimate_inr || r.cost_estimated || 15000;
+                    const proofUrl = r.completion_proof ? (r.completion_proof.startsWith("data:") || r.completion_proof.startsWith("http") ? r.completion_proof : `data:image/jpeg;base64,${r.completion_proof}`) : null;
+                    const origImgUrl = r.annotated_image ? (r.annotated_image.startsWith("data:") || r.annotated_image.startsWith("http") ? r.annotated_image : `data:image/jpeg;base64,${r.annotated_image}`) : null;
+
+                    return (
+                      <div key={r.id || i} className="bg-white/[0.03] border border-emerald-500/20 rounded-2xl p-5 space-y-4 hover:border-emerald-500/40 transition-all">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-base font-bold text-white">{r.location_name || r.location?.name || "Repaired Work Site"}</span>
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-white/10 text-white/70 font-mono">
+                                ID: {r.id}
+                              </span>
+                              <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 inline-flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" /> ✅ Fixed & Verified
+                              </span>
+                            </div>
+                            <p className="text-xs text-white/50">Defect: {r.damage_type || "Infrastructure Defect"} · Sector: <span className="uppercase text-white/70 font-semibold">{r.sector || "Road"}</span></p>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <span className="text-xs text-white/50">Contractor:</span>
+                              <span className="text-xs font-mono text-[#ffd76b] font-bold">@{r.assigned_to || "contractor"}</span>
+                            </div>
+                            <span className="text-xs text-emerald-400 font-extrabold block mt-1">Budget Spent: ₹{Number(cost).toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Images Comparison: Original Detection vs Completion Proof */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-white/40 font-bold uppercase block">Original AI Damage Scan</span>
+                            <div className="rounded-xl overflow-hidden border border-white/10 max-h-48 bg-zinc-950 flex justify-center p-1">
+                              {origImgUrl ? (
+                                <img src={origImgUrl} alt="Initial Defect" className="h-full object-contain rounded-lg" />
+                              ) : (
+                                <div className="flex items-center justify-center h-32 text-xs text-white/30">No Image Available</div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-[#4edea3] font-bold uppercase block flex items-center gap-1">
+                              <Camera className="w-3 h-3" /> Field Completion Proof (After Repair)
+                            </span>
+                            <div className="rounded-xl overflow-hidden border border-emerald-500/30 max-h-48 bg-zinc-950 flex justify-center p-1">
+                              {proofUrl ? (
+                                <img src={proofUrl} alt="Completion Proof" className="h-full object-contain rounded-lg" />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center h-32 text-xs text-emerald-400/60 font-semibold">
+                                  <ShieldCheck className="w-6 h-6 mb-1 text-emerald-400 opacity-60" />
+                                  <span>Site Verified & Closed by Contractor</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Completion Details Footer */}
+                        <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-xs text-white/50">
+                          <span>Reported by: <strong className="text-white">{r.reporter || "Citizen"}</strong></span>
+                          <span>Repair Method: <strong className="text-[#5de6ff]">{r.repair_method || "Concrete Patching & Sealing"}</strong></span>
+                          {r.fix_date && <span className="text-emerald-400">Completed On: {new Date(r.fix_date).toLocaleDateString()}</span>}
                         </div>
                       </div>
                     );

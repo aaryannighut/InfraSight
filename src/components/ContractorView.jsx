@@ -122,8 +122,8 @@ export default function ContractorView({ user, onLogout }) {
     setUpdating(false);
   };
 
-  const activeCount = tasks.filter(t => t.status !== "fixed").length;
-  const completedCount = tasks.filter(t => t.status === "fixed").length;
+  const activeCount = tasks.filter(t => t.status !== "fixed" && t.status !== "completed").length;
+  const completedCount = tasks.filter(t => t.status === "fixed" || t.status === "completed").length;
 
   const navItems = [
     { id: "tasks", label: "Assigned Work Orders", icon: Wrench, badge: activeCount },
@@ -280,14 +280,14 @@ export default function ContractorView({ user, onLogout }) {
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
                   </div>
-                ) : tasks.filter(t => t.status !== "fixed").length === 0 ? (
+                ) : tasks.filter(t => t.status !== "fixed" && t.status !== "completed").length === 0 ? (
                   <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-12 text-center">
                     <CheckCircle className="w-10 h-10 text-[#4edea3] mx-auto mb-3" />
                     <p className="text-white font-bold text-sm">No active work orders pending!</p>
                     <p className="text-white/30 text-xs mt-1">All assigned jobs are completed.</p>
                   </div>
                 ) : (
-                  tasks.filter(t => t.status !== "fixed").map((task, i) => {
+                  tasks.filter(t => t.status !== "fixed" && t.status !== "completed").map((task, i) => {
                     const status = STATUS_META[task.status] || STATUS_META.assigned;
                     const contractorDecision = task.contractor_decision || (task.status === "assigned" ? "pending" : task.status);
 
@@ -544,13 +544,13 @@ export default function ContractorView({ user, onLogout }) {
                   <p className="text-xs text-white/40 mt-0.5">Verified repair completions with uploaded proof photos</p>
                 </div>
 
-                {tasks.filter(t => t.status === "fixed").length === 0 ? (
+                {tasks.filter(t => t.status === "fixed" || t.status === "completed").length === 0 ? (
                   <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-12 text-center">
                     <FileCheck className="w-10 h-10 text-white/20 mx-auto mb-3" />
                     <p className="text-white/40 text-sm">No completed jobs yet</p>
                   </div>
                 ) : (
-                  tasks.filter(t => t.status === "fixed").map((t, i) => (
+                  tasks.filter(t => t.status === "fixed" || t.status === "completed").map((t, i) => (
                     <div key={t.id || i} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

@@ -15,7 +15,8 @@ import {
   ClipboardList,
   ListOrdered,
   UserPlus,
-  HardHat
+  HardHat,
+  CheckCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -23,6 +24,7 @@ const navItems = [
   { icon: ClipboardList, label: "Incoming Reports", id: "inspector-reports" },
   { icon: ListOrdered, label: "Priority Queue", id: "priority-queue" },
   { icon: HardHat, label: "Assigned Work", id: "assigned-work" },
+  { icon: CheckCircle, label: "Completed Work", id: "completed-work" },
   { icon: UserPlus, label: "Contractors", id: "contractor-register" },
   { icon: Upload, label: "New Scan", id: "scan" },
   { icon: Video, label: "Video / Live", id: "video" },

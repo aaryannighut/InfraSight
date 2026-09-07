@@ -287,8 +287,7 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```bash
 # Terminal 1 — FastAPI Backend (HTTPS)
 cd backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 \
-  --ssl-keyfile key.pem --ssl-certfile cert.pem
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
 
 # Terminal 2 — Main Command Center App
 npm run dev                # → https://localhost:5173

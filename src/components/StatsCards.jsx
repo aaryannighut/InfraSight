@@ -5,14 +5,16 @@ import {
   AlertTriangle,
   CheckCircle,
   Activity,
+  ClipboardList,
+  Wrench,
+  FileCheck,
   TrendingUp,
   TrendingDown,
-  DollarSign,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
-function AnimatedCounter({ target, duration = 2000, prefix = "", suffix = "" }) {
+function AnimatedCounter({ target, duration = 1500, prefix = "", suffix = "" }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -41,53 +43,52 @@ function AnimatedCounter({ target, duration = 2000, prefix = "", suffix = "" }) 
   );
 }
 
-function buildStats(apiStats) {
-  const totalScans = apiStats?.total_scans || 0;
-  const totalDefects = apiStats?.total_defects || 0;
-  const clearScans = Math.max(0, totalScans - (totalDefects > 0 ? 1 : 0));
-  const integrity = apiStats?.structural_integrity ?? 100;
+function buildStats(apiStats, reports = []) {
+  const incomingCount = reports.filter(r => !r.assigned_to && r.status !== "fixed" && r.status !== "completed").length;
+  const activeAssignedCount = reports.filter(r => r.assigned_to && r.status !== "fixed" && r.status !== "completed").length;
+  const completedCount = reports.filter(r => r.status === "fixed" || r.status === "completed").length;
+  const integrity = apiStats?.structural_integrity ?? (completedCount > 0 ? Math.min(100, 75 + completedCount * 5) : 82);
 
   return [
     {
-      label: "Total Scans",
-      value: totalScans,
-      change: totalScans > 0 ? `${totalScans} today` : "No scans yet",
+      label: "Incoming Reports",
+      value: incomingCount,
+      change: incomingCount > 0 ? `${incomingCount} pending review` : "All reviewed",
+      trend: incomingCount > 0 ? "up" : "down",
+      icon: ClipboardList,
+      color: "amber",
+      gradient: "from-amber-500/20 to-amber-500/0",
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-400",
+    },
+    {
+      label: "Active Assigned Work",
+      value: activeAssignedCount,
+      change: activeAssignedCount > 0 ? `${activeAssignedCount} in field repair` : "No active jobs",
       trend: "up",
-      icon: ScanLine,
+      icon: Wrench,
+      color: "cyan",
+      gradient: "from-cyan-500/20 to-cyan-500/0",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-400",
+    },
+    {
+      label: "Completed Repairs",
+      value: completedCount,
+      change: completedCount > 0 ? `${completedCount} fixed & verified` : "0 completed",
+      trend: "up",
+      icon: FileCheck,
       color: "emerald",
       gradient: "from-emerald-500/20 to-emerald-500/0",
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-400",
     },
     {
-      label: "Defects Detected",
-      value: totalDefects,
-      change: totalDefects > 0 ? `${apiStats?.critical_count || 0} critical` : "None",
-      trend: totalDefects > 0 ? "up" : "down",
-      icon: AlertTriangle,
-      color: "red",
-      gradient: "from-red-500/20 to-red-500/0",
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-400",
-    },
-    {
       label: "Structural Integrity",
       value: integrity,
-      change: integrity > 80 ? "Healthy" : integrity > 50 ? "At risk" : "Critical",
+      change: integrity > 80 ? "Healthy System" : integrity > 50 ? "At risk" : "Critical",
       trend: integrity > 60 ? "up" : "down",
       icon: CheckCircle,
-      color: "cyan",
-      gradient: "from-cyan-500/20 to-cyan-500/0",
-      iconBg: "bg-cyan-500/10",
-      iconColor: "text-cyan-400",
-      suffix: "%",
-    },
-    {
-      label: "Avg Severity",
-      value: apiStats?.avg_severity || 0,
-      change: (apiStats?.avg_severity || 0) > 60 ? "High risk" : (apiStats?.avg_severity || 0) > 30 ? "Moderate" : "Low",
-      trend: (apiStats?.avg_severity || 0) > 50 ? "up" : "down",
-      icon: Activity,
       color: "violet",
       gradient: "from-violet-500/20 to-violet-500/0",
       iconBg: "bg-violet-500/10",
@@ -98,23 +99,29 @@ function buildStats(apiStats) {
 }
 
 export default function StatsCards() {
-  const [stats, setStats] = useState(buildStats(null));
+  const [stats, setStats] = useState(buildStats(null, []));
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API_URL}/stats`);
-        if (res.ok) {
-          const data = await res.json();
-          setStats(buildStats(data));
+        const [statsRes, reportsRes] = await Promise.all([
+          fetch(`${API_URL}/stats`),
+          fetch(`${API_URL}/admin/reports/map`),
+        ]);
+        let sData = null;
+        let rData = [];
+        if (statsRes.ok) sData = await statsRes.json();
+        if (reportsRes.ok) {
+          const rJson = await reportsRes.json();
+          rData = rJson.reports || rJson || [];
         }
-      } catch (e) {
-        // Backend not running — keep defaults
+        setStats(buildStats(sData, rData));
+      } catch {
+        // keep fallback
       }
     };
     fetchStats();
-    // Poll every 5 seconds for live updates
-    const interval = setInterval(fetchStats, 5000);
+    const interval = setInterval(fetchStats, 4000);
     return () => clearInterval(interval);
   }, []);
 
