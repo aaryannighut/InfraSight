@@ -87,9 +87,76 @@ URGENCY_SCORES = {
     "minor": 20,
 }
 
+import os
+import json
+
+COST_FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), "cost_feedback_store.json")
+
+def _load_cost_feedback() -> list:
+    try:
+        if os.path.exists(COST_FEEDBACK_FILE):
+            with open(COST_FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+def _save_cost_feedback(data: list):
+    try:
+        with open(COST_FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+COST_FEEDBACK_DATA = _load_cost_feedback()
+
+def record_cost_feedback(damage_type: str, severity_label: str, ai_cost: float, inspector_cost: float) -> dict:
+    """
+    Record inspector manual cost override to continuously train future AI price estimates.
+    """
+    if not ai_cost or ai_cost <= 0 or not inspector_cost or inspector_cost <= 0:
+        return {}
+
+    ratio = float(inspector_cost) / float(ai_cost)
+    entry = {
+        "damage_type": str(damage_type or "General Defect"),
+        "severity_label": str(severity_label or "minor"),
+        "ai_cost": float(ai_cost),
+        "inspector_cost": float(inspector_cost),
+        "ratio": ratio,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    COST_FEEDBACK_DATA.append(entry)
+    _save_cost_feedback(COST_FEEDBACK_DATA)
+
+    mult, count = get_learned_cost_multiplier(damage_type, severity_label)
+    print(f"[AI PRICE LEARNING] Recorded feedback. New learned multiplier for {damage_type}: {mult:.3f}x across {count} samples")
+    return {"learned_multiplier": mult, "sample_count": count}
+
+def get_learned_cost_multiplier(damage_type: str = None, severity_label: str = None) -> tuple[float, int]:
+    """
+    Returns (learned_multiplier, total_samples).
+    """
+    if not COST_FEEDBACK_DATA:
+        return 1.0, 0
+
+    matching = [
+        e["ratio"] for e in COST_FEEDBACK_DATA
+        if (not damage_type or str(e.get("damage_type")).lower() in str(damage_type).lower() or str(damage_type).lower() in str(e.get("damage_type")).lower())
+    ]
+    if not matching:
+        matching = [e["ratio"] for e in COST_FEEDBACK_DATA]
+
+    if not matching:
+        return 1.0, 0
+
+    avg_mult = sum(matching) / len(matching)
+    clamped_mult = max(0.5, min(3.0, avg_mult))
+    return round(clamped_mult, 3), len(matching)
+
 
 def estimate_cost(detection: dict) -> dict:
-    """Estimate repair cost for a single detection."""
+    """Estimate repair cost for a single detection with continuous AI price learning."""
     cls = detection.get("class_name", "D00")
     severity = detection.get("severity_label", "minor")
 
@@ -103,7 +170,11 @@ def estimate_cost(detection: dict) -> dict:
     # Scale by area ratio — bigger damage = higher cost
     area_ratio = detection.get("area_ratio", 5)
     area_multiplier = 1 + (area_ratio / 100) * 2  # 0-100% → 1x-3x
-    cost_estimated = int(cost_avg * area_multiplier)
+    raw_cost_estimated = int(cost_avg * area_multiplier)
+
+    # Apply continuous learning multiplier from past inspector overrides
+    learned_mult, sample_count = get_learned_cost_multiplier(detection.get("display_name") or cls, severity)
+    cost_estimated = int(raw_cost_estimated * learned_mult)
 
     # If ignored cost
     ignore_mult = IGNORE_MULTIPLIER.get(severity, 3.0)
@@ -113,7 +184,10 @@ def estimate_cost(detection: dict) -> dict:
     return {
         "cost_min": cost_min,
         "cost_max": cost_max,
+        "raw_ai_cost": raw_cost_estimated,
         "cost_estimated": cost_estimated,
+        "learned_multiplier": learned_mult,
+        "learning_samples": sample_count,
         "cost_if_ignored": cost_if_ignored,
         "savings_if_fixed_now": savings,
         "repair_method": level.get("method", "Professional assessment"),

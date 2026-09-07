@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 from inference import get_detector, check_image_authenticity
 from severity import compute_severity, compute_overall_stats
-from cost_engine import estimate_cost, rank_priorities, generate_repair_plan, explain_severity
+from cost_engine import estimate_cost, rank_priorities, generate_repair_plan, explain_severity, record_cost_feedback, get_learned_cost_multiplier
 from auth import login, register_citizen, verify_token, register_contractor, get_all_contractors, register_citizen_user
 from fraud_detection import run_full_fraud_check
 from analytics_engine import generate_wall_of_shame, generate_heatmap_data, generate_priority_queue, generate_city_health_scores
@@ -190,8 +190,9 @@ async def assign_work(
     priority: str = Form(default="medium"),
     notes: str = Form(default=""),
     target_date: Optional[str] = Form(default=None),
+    inspector_cost_estimate: Optional[float] = Form(default=None),
 ):
-    """Inspector assigns a report/complaint to a specific contractor with priority."""
+    """Inspector assigns a report/complaint to a specific contractor with priority and optional manual cost override."""
     target_report = None
     for r in citizen_reports:
         if r["id"] == report_id:
@@ -206,6 +207,21 @@ async def assign_work(
     if not target_report:
         raise HTTPException(404, "Report not found")
         
+    initial_ai_cost = target_report.get("ai_cost_estimate") or target_report.get("cost_estimate_inr") or target_report.get("cost_estimated") or 15000
+    target_report["ai_cost_estimate"] = initial_ai_cost
+
+    if inspector_cost_estimate and float(inspector_cost_estimate) > 0:
+        insp_cost = float(inspector_cost_estimate)
+        target_report["inspector_cost_estimate"] = insp_cost
+        target_report["cost_estimate_inr"] = insp_cost
+        target_report["cost_estimated"] = insp_cost
+        
+        # Record feedback for continuous AI model price learning
+        damage_type = target_report.get("damage_type") or "Infrastructure Repair"
+        sev_label = str(target_report.get("priority") or "medium")
+        feedback_info = record_cost_feedback(damage_type, sev_label, initial_ai_cost, insp_cost)
+        target_report["ai_learning_info"] = feedback_info
+
     target_report["assigned_to"] = contractor_username
     target_report["priority"] = priority
     target_report["assignment_notes"] = notes
@@ -218,7 +234,7 @@ async def assign_work(
     target_report["status_history"].append({
         "status": "assigned",
         "time": datetime.now(timezone.utc).isoformat(),
-        "note": f"Assigned to contractor @{contractor_username} ({priority} priority)",
+        "note": f"Assigned to contractor @{contractor_username} ({priority} priority) with allocated budget ₹{target_report.get('cost_estimated', 15000):,}",
     })
     
     _persist_shared_store()
@@ -1492,8 +1508,11 @@ async def get_admin_map_reports():
                 "upvotes": r.get("upvotes", 1),
                 "defect_count": total_defects,
                 "annotated_image": r.get("annotated_image", ""),
-                "cost_estimated": cost_est,
-                "cost_estimate_inr": cost_est,
+                "cost_estimated": r.get("cost_estimated") or cost_est,
+                "cost_estimate_inr": r.get("cost_estimate_inr") or cost_est,
+                "ai_cost_estimate": r.get("ai_cost_estimate") or r.get("cost_estimate_inr") or cost_est,
+                "inspector_cost_estimate": r.get("inspector_cost_estimate"),
+                "ai_learning_info": r.get("ai_learning_info"),
                 "repair_method": repair_method,
                 "status_history": r.get("status_history", []),
                 "assigned_to": r.get("assigned_to"),

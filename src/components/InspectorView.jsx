@@ -37,6 +37,56 @@ const getStageIndex = (status) => {
   return 0;
 };
 
+const getReportInspectorCost = (t) => {
+  if (!t) return 0;
+  if (t.inspector_cost_estimate && Number(t.inspector_cost_estimate) > 0) {
+    return Number(t.inspector_cost_estimate);
+  }
+  if (t.cost_estimate_inr && Number(t.cost_estimate_inr) > 0) {
+    return Number(t.cost_estimate_inr);
+  }
+  if (t.cost_estimated && Number(t.cost_estimated) > 0) {
+    return Number(t.cost_estimated);
+  }
+  if (t.ai_cost_estimate && Number(t.ai_cost_estimate) > 0) {
+    return Number(t.ai_cost_estimate);
+  }
+  if (Array.isArray(t.detections) && t.detections.length > 0) {
+    const sum = t.detections.reduce((acc, det) => {
+      const c = det.cost?.cost_estimated || det.cost_estimated || 0;
+      return acc + (Number(c) || 0);
+    }, 0);
+    if (sum > 0) return sum;
+  }
+  if (t.stats?.total_cost && Number(t.stats.total_cost) > 0) {
+    return Number(t.stats.total_cost);
+  }
+  const sev = t.stats?.avg_severity || t.severity || t.severity_score || 65;
+  return Math.round(3500 + (sev * 150));
+};
+
+const getReportAiCost = (t) => {
+  if (!t) return 0;
+  if (t.ai_cost_estimate && Number(t.ai_cost_estimate) > 0) {
+    return Number(t.ai_cost_estimate);
+  }
+  if (Array.isArray(t.detections) && t.detections.length > 0) {
+    const sum = t.detections.reduce((acc, det) => {
+      const c = det.cost?.cost_estimated || det.cost_estimated || 0;
+      return acc + (Number(c) || 0);
+    }, 0);
+    if (sum > 0) return sum;
+  }
+  if (t.cost_estimated && Number(t.cost_estimated) > 0) {
+    return Number(t.cost_estimated);
+  }
+  if (t.cost_estimate_inr && Number(t.cost_estimate_inr) > 0) {
+    return Number(t.cost_estimate_inr);
+  }
+  const sev = t.stats?.avg_severity || t.severity || t.severity_score || 65;
+  return Math.round(3500 + (sev * 150));
+};
+
 export default function InspectorView({ user, onLogout, tabOnly }) {
   const [activeTab, setActiveTab] = useState("incoming");
   const currentTab = tabOnly || activeTab;
@@ -54,6 +104,14 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
   const [selectedContractor, setSelectedContractor] = useState("");
   const [assignPriority, setAssignPriority] = useState("high");
   const [assignNotes, setAssignNotes] = useState("");
+  const [assignCost, setAssignCost] = useState("");
+
+  useEffect(() => {
+    if (assigningReport) {
+      const c = getReportInspectorCost(assigningReport);
+      setAssignCost(c);
+    }
+  }, [assigningReport]);
 
   // Contractor Registration state
   const [regName, setRegName] = useState("");
@@ -151,6 +209,9 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
       fd.append("contractor_username", selectedContractor);
       fd.append("priority", assignPriority);
       fd.append("notes", assignNotes);
+      if (assignCost) {
+        fd.append("inspector_cost_estimate", assignCost);
+      }
 
       const res = await fetch(`${API_URL}/inspector/assign-work`, {
         method: "POST",
@@ -160,6 +221,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
       if (res.ok) {
         setAssigningReport(null);
         setAssignNotes("");
+        setAssignCost("");
         fetchData();
       }
     } catch { /* silent */ }
@@ -440,8 +502,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   const imgUrl = (typeof r.annotated_image === "string" && r.annotated_image)
                     ? (r.annotated_image.startsWith("data:") ? r.annotated_image : `data:image/jpeg;base64,${r.annotated_image}`)
                     : null;
-                  const rawCost = r.cost_estimate_inr || r.cost_estimated || 13720;
-                  const estCost = typeof rawCost === "number" ? rawCost : (Number(rawCost) || 13720);
+                  const estCost = getReportInspectorCost(r);
 
                   const locName = r.location_name || r.location?.name || (typeof r.location === "string" ? r.location : "Location Pin Captured");
                   const reporterName = typeof r.reporter === "string" ? r.reporter : "Citizen";
@@ -548,10 +609,23 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
 
                             {/* Total Estimated Cost & Repair Methods */}
                             <div className="bg-white/[0.03] border border-white/[0.06] p-3.5 rounded-xl space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Total Repair Cost ({r.detections?.length || 1} defects)</span>
-                                <span className="text-sm font-extrabold text-[#4edea3]">₹{estCost.toLocaleString()}</span>
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="text-[10px] text-[#5de6ff] font-semibold uppercase tracking-wider flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-[#5de6ff]" /> AI Estimated Cost
+                                </span>
+                                <span className="text-xs font-bold text-[#5de6ff]">₹{getReportAiCost(r).toLocaleString()}</span>
                               </div>
+                              {r.inspector_cost_estimate ? (
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-white/[0.04]">
+                                  <span className="text-[10px] text-[#4edea3] font-bold uppercase tracking-wider">Inspector Budget</span>
+                                  <span className="text-sm font-extrabold text-[#4edea3]">₹{Number(r.inspector_cost_estimate).toLocaleString()}</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between text-xs pt-1 border-t border-white/[0.04]">
+                                  <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Allocated Cost</span>
+                                  <span className="text-sm font-extrabold text-[#4edea3]">₹{estCost.toLocaleString()}</span>
+                                </div>
+                              )}
                               {repairMethodName && (
                                 <div className="pt-1.5 border-t border-white/[0.04]">
                                   <span className="text-[10px] text-white/30 font-semibold uppercase block">Recommended Method(s)</span>
@@ -681,7 +755,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                 <div className="space-y-4">
                   {activeAssignedReports.map((r, i) => {
                     const decision = r.contractor_decision || (r.status === "assigned" ? "pending" : r.status);
-                    const cost = r.cost_estimated || 15000;
+                    const cost = getReportInspectorCost(r);
 
                     return (
                       <div key={r.id || i} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 space-y-4 hover:border-white/10 transition-all">
@@ -859,7 +933,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-white">
-                      ₹{completedReports.reduce((acc, r) => acc + (Number(r.cost_estimate_inr || r.cost_estimated) || 15000), 0).toLocaleString()}
+                      ₹{completedReports.reduce((acc, r) => acc + getReportInspectorCost(r), 0).toLocaleString()}
                     </span>
                     <p className="text-[10px] text-white/40 font-semibold uppercase">Total Municipal Spend</p>
                   </div>
@@ -888,7 +962,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
               ) : (
                 <div className="space-y-4">
                   {completedReports.map((r, i) => {
-                    const cost = r.cost_estimate_inr || r.cost_estimated || 15000;
+                    const cost = getReportInspectorCost(r);
                     const proofUrl = r.completion_proof ? (r.completion_proof.startsWith("data:") || r.completion_proof.startsWith("http") ? r.completion_proof : `data:image/jpeg;base64,${r.completion_proof}`) : null;
                     const origImgUrl = r.annotated_image ? (r.annotated_image.startsWith("data:") || r.annotated_image.startsWith("http") ? r.annotated_image : `data:image/jpeg;base64,${r.annotated_image}`) : null;
 
@@ -1090,9 +1164,42 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                 </button>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1">
-                <p className="text-xs font-bold text-white">{assigningReport.location_name || assigningReport.location?.name || (typeof assigningReport.location === "string" ? assigningReport.location : "Report Location")}</p>
-                <p className="text-[11px] text-[#ffd76b] font-semibold">Defect: {assigningReport.damage_type || "Infrastructure Defect"} · Est. Cost: ₹{(assigningReport.cost_estimate_inr || 15000).toLocaleString()}</p>
+              <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-white">{assigningReport.location_name || assigningReport.location?.name || (typeof assigningReport.location === "string" ? assigningReport.location : "Report Location")}</p>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/70 font-mono">ID: {assigningReport.id}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t border-white/[0.04]">
+                  <span className="text-white/50 flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-[#5de6ff]" /> ✨ AI Estimated Cost:
+                  </span>
+                  <span className="font-extrabold text-[#5de6ff]">
+                    ₹{getReportAiCost(assigningReport).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Inspector Manual Cost Estimate Override */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[10px] text-white/40 uppercase font-bold block">Inspector Allocated Cost Estimate (₹)</label>
+                  <span className="text-[10px] text-[#4edea3] font-semibold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#4edea3]" /> Continuous AI Price Learning Active
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-2.5 text-xs text-white/40 font-bold">₹</span>
+                  <input
+                    type="number"
+                    value={assignCost}
+                    onChange={(e) => setAssignCost(e.target.value)}
+                    placeholder={`Enter manual estimate (e.g. ${getReportInspectorCost(assigningReport)})`}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-[#4edea3]/40 text-white text-xs font-bold outline-none focus:border-[#4edea3]"
+                  />
+                </div>
+                <p className="text-[10px] text-white/40 mt-1 italic">
+                  💡 Entering your manual cost feedback will continuously train the AI model for future price predictions.
+                </p>
               </div>
 
               <div>
