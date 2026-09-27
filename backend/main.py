@@ -8,6 +8,7 @@ import time
 import io
 import json
 from datetime import datetime, timezone
+from collections import defaultdict
 from typing import Optional
 from pathlib import Path
 
@@ -75,20 +76,29 @@ def _reload_shared_store():
         data = json.loads(SHARED_STORE_FILE.read_text())
         shared_cr = data.get("citizen_reports", [])
         shared_ds = data.get("detection_store", [])
-        if shared_cr:
-            merged = {r["id"]: r for r in citizen_reports}
-            for r in shared_cr:
-                merged[r["id"]] = r
+        if shared_cr is not None:
             citizen_reports.clear()
-            citizen_reports.extend(merged.values())
-        if shared_ds:
-            merged = {r["id"]: r for r in detection_store}
-            for r in shared_ds:
-                merged[r["id"]] = r
+            citizen_reports.extend(shared_cr)
+        if shared_ds is not None:
             detection_store.clear()
-            detection_store.extend(merged.values())
+            detection_store.extend(shared_ds)
     except Exception as e:
         print(f"[STORE] Reload error: {e}")
+
+def _get_valid_reports():
+    """Helper to return only legitimate citizen-submitted or user-uploaded reports."""
+    seen_ids = set()
+    valid = []
+    for r in citizen_reports:
+        if isinstance(r, dict) and r.get("id"):
+            seen_ids.add(r["id"])
+            valid.append(r)
+    for r in detection_store:
+        if isinstance(r, dict) and r.get("id") and r.get("id") not in seen_ids:
+            if r.get("source") in ("citizen_report", "user_upload") or r.get("reporter"):
+                valid.append(r)
+                seen_ids.add(r["id"])
+    return valid
 
 # System settings — controllable by government admin
 system_settings = {
@@ -713,15 +723,22 @@ async def get_repair_plan():
     Generate Today's Repair Plan — the 'What should I fix today?' feature.
     Aggregates all detections, ranks by priority, estimates costs.
     """
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     all_detections = []
-    for r in detection_store:
-        for det in r["detections"]:
-            det_copy = {**det}
-            det_copy["source_scan"] = r["id"]
-            det_copy["scan_time"] = r["timestamp"]
-            loc = r.get("location", {})
-            det_copy["location_name"] = loc.get("name") or r.get("filename", "Unknown")
-            all_detections.append(det_copy)
+    for r in all_reports:
+        dets = r.get("detections") or []
+        for det in dets:
+            if isinstance(det, dict):
+                det_copy = {**det}
+                det_copy["source_scan"] = r.get("id")
+                det_copy["scan_time"] = r.get("timestamp")
+                loc = r.get("location", {})
+                if isinstance(loc, dict):
+                    det_copy["location_name"] = loc.get("name") or r.get("location_name") or "Survey Area"
+                else:
+                    det_copy["location_name"] = str(loc) if loc else "Survey Area"
+                all_detections.append(det_copy)
 
     if not all_detections:
         return {
@@ -737,11 +754,13 @@ async def get_repair_plan():
 @app.get("/repair-plan/{detection_id}")
 async def get_detection_repair_plan(detection_id: str):
     """Generate repair plan for a specific scan."""
-    for r in detection_store:
-        if r["id"] == detection_id:
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
+    for r in all_reports:
+        if r.get("id") == detection_id:
             loc = r.get("location", {})
-            location_name = loc.get("name") or r.get("filename", "Unknown")
-            plan = generate_repair_plan(r["detections"], location=location_name)
+            location_name = loc.get("name") if isinstance(loc, dict) else (str(loc) if loc else "Unknown")
+            plan = generate_repair_plan(r.get("detections", []), location=location_name)
             return plan
     raise HTTPException(404, "Detection not found")
 
@@ -751,17 +770,100 @@ async def get_detection_repair_plan(detection_id: str):
 # ADVANCED ANALYTICS
 # ============================================================
 
+@app.get("/analytics/summary")
+async def analytics_summary():
+    """Dynamic analytics chart data calculated from actual project reports."""
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
+
+    days_map = {"Mon": 0, "Tue": 0, "Wed": 0, "Thu": 0, "Fri": 0, "Sat": 0, "Sun": 0}
+    days_cracks = {"Mon": 0, "Tue": 0, "Wed": 0, "Thu": 0, "Fri": 0, "Sat": 0, "Sun": 0}
+
+    sev_dist = {"Critical": 0, "Moderate": 0, "Minor": 0, "Clear": 0}
+
+    months_detected = defaultdict(int)
+    months_resolved = defaultdict(int)
+
+    for r in all_reports:
+        ts = r.get("timestamp")
+        dt = None
+        if ts:
+            try:
+                dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except Exception:
+                pass
+        
+        day_name = dt.strftime("%a") if dt else "Mon"
+        if day_name in days_map:
+            days_map[day_name] += 1
+
+        dets = r.get("detections") or []
+        defects_cnt = r.get("stats", {}).get("total_defects") or r.get("defect_count") or (len(dets) if dets else 1)
+        if day_name in days_cracks:
+            days_cracks[day_name] += defects_cnt
+
+        sev = r.get("stats", {}).get("avg_severity") or r.get("severity") or r.get("severity_score") or 50
+        if sev >= 75:
+            sev_dist["Critical"] += 1
+        elif sev >= 50:
+            sev_dist["Moderate"] += 1
+        elif sev >= 25:
+            sev_dist["Minor"] += 1
+        else:
+            sev_dist["Clear"] += 1
+
+        month_name = dt.strftime("%b") if dt else "Sep"
+        months_detected[month_name] += 1
+        if r.get("status") in ("fixed", "completed"):
+            months_resolved[month_name] += 1
+
+    scan_data = [
+        {"date": d, "scans": days_map[d], "cracks": days_cracks[d]}
+        for d in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    ]
+
+    severity_data = [
+        {"name": "Critical", "value": sev_dist["Critical"], "color": "#ef4444"},
+        {"name": "Moderate", "value": sev_dist["Moderate"], "color": "#f59e0b"},
+        {"name": "Minor", "value": sev_dist["Minor"], "color": "#eab308"},
+        {"name": "Clear", "value": sev_dist["Clear"], "color": "#10b981"},
+    ]
+
+    months_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    active_months = [m for m in months_list if m in months_detected or m in months_resolved]
+    if not active_months:
+        active_months = ["Jul", "Aug", "Sep"]
+
+    monthly_data = [
+        {
+            "month": m,
+            "detected": months_detected.get(m, 0),
+            "resolved": months_resolved.get(m, 0),
+        }
+        for m in active_months
+    ]
+
+    return {
+        "scan_data": scan_data,
+        "severity_data": severity_data,
+        "monthly_data": monthly_data,
+        "total_reports": len(all_reports),
+    }
+
+
 @app.get("/analytics/wall-of-shame")
 async def wall_of_shame():
     """Wall of Shame — contractor accountability leaderboard."""
-    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     return generate_wall_of_shame(all_reports)
 
 
 @app.get("/analytics/heatmap")
 async def damage_heatmap():
     """Smart Damage Heatmap data points."""
-    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     points = generate_heatmap_data(all_reports)
     return {"points": points, "total": len(points)}
 
@@ -769,7 +871,8 @@ async def damage_heatmap():
 @app.get("/analytics/priority-queue")
 async def maintenance_priority():
     """Maintenance Priority Engine — what to fix first."""
-    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     priorities = generate_priority_queue(all_reports)
     return {"priorities": priorities[:10], "total_unfixed": len(priorities)}
 
@@ -777,7 +880,8 @@ async def maintenance_priority():
 @app.get("/analytics/city-health")
 async def city_health():
     """Road Health Score per city/area."""
-    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     scores = generate_city_health_scores(all_reports)
     return {"cities": scores, "total_cities": len(scores)}
 
@@ -785,7 +889,8 @@ async def city_health():
 @app.get("/analytics/forecast")
 async def area_forecast():
     """Predictive maintenance — which zones will fail next."""
-    all_reports = citizen_reports + [r for r in detection_store if r.get("source") != "citizen_report"]
+    _reload_shared_store()
+    all_reports = _get_valid_reports()
     return generate_area_forecast(all_reports)
 
 
@@ -1353,6 +1458,8 @@ async def seed_demo_reports():
     for rid, lat, lng, loc_name, dtype, severity, status, upvotes, defects, reporter, desc, ts, cost, method in demo:
         if rid in existing_ids:
             continue
+        assigned_contractor = "contractor" if status in ("in_progress", "fixed", "acknowledged") else None
+        contractor_dec = "completed" if status == "fixed" else ("received" if status in ("in_progress", "acknowledged") else None)
         citizen_reports.append({
             "id": rid,
             "timestamp": ts,
@@ -1372,14 +1479,15 @@ async def seed_demo_reports():
             "inference_time_ms": 0,
             "status": status,
             "status_history": [{"status": status, "time": ts, "note": "Demo seeded report"}],
-            "assigned_to": None,
-            "fix_date": None,
+            "assigned_to": assigned_contractor,
+            "contractor_decision": contractor_dec,
+            "fix_date": ts if status == "fixed" else None,
             "upvotes": upvotes,
             "trust_score": 95,
             "fraud_check": {"combined_trust_score": 95, "verdict": "trusted", "action": "auto_approve", "flags": []},
         })
         seeded += 1
-
+    _persist_shared_store()
     return {"seeded": seeded, "total_reports": len(citizen_reports), "message": f"Seeded {seeded} demo reports"}
 
 
@@ -1459,7 +1567,10 @@ async def get_admin_map_reports():
     """ADMIN: All reports with images + admin controls for government dashboard."""
     _reload_shared_store()
     map_data = []
-    for r in citizen_reports:
+
+    all_reports = _get_valid_reports()
+
+    for r in all_reports:
         try:
             loc = r.get("location", {})
             if isinstance(loc, dict):
@@ -1473,7 +1584,7 @@ async def get_admin_map_reports():
 
             detections = r.get("detections") or []
             stats = r.get("stats") or {}
-            damage_type = detections[0].get("display_name", "Infrastructure Damage") if (detections and isinstance(detections[0], dict)) else "Infrastructure Damage"
+            damage_type = r.get("damage_type") or (detections[0].get("display_name", "Infrastructure Damage") if (detections and isinstance(detections[0], dict)) else "Infrastructure Damage")
             
             cost_est = 0
             methods_list = []
@@ -1486,10 +1597,10 @@ async def get_admin_map_reports():
                             m = c.get("repair_method", "")
                             if m and m not in methods_list:
                                 methods_list.append(m)
-            repair_method = ", ".join(methods_list) if methods_list else "Concrete Patching & Grouting"
+            repair_method = r.get("repair_method") or (", ".join(methods_list) if methods_list else "Concrete Patching & Grouting")
 
-            avg_sev = stats.get("avg_severity", 65) if isinstance(stats, dict) else 65
-            total_defects = stats.get("total_defects", len(detections) or 1) if isinstance(stats, dict) else (len(detections) or 1)
+            avg_sev = stats.get("avg_severity", r.get("severity", 65)) if isinstance(stats, dict) else r.get("severity", 65)
+            total_defects = stats.get("total_defects", r.get("defect_count", len(detections) or 1)) if isinstance(stats, dict) else (len(detections) or 1)
 
             map_data.append({
                 "id": r.get("id", "RPT-001"),
@@ -1516,6 +1627,10 @@ async def get_admin_map_reports():
                 "repair_method": repair_method,
                 "status_history": r.get("status_history", []),
                 "assigned_to": r.get("assigned_to"),
+                "contractor_decision": r.get("contractor_decision"),
+                "target_date": r.get("target_date"),
+                "inspector_notes": r.get("inspector_notes"),
+                "assignment_notes": r.get("assignment_notes"),
                 "detections": detections,
             })
         except Exception as e:
@@ -1578,22 +1693,41 @@ async def update_report_status(
     status: str = Form(...),
     note: str = Form(default=""),
 ):
-    """ADMIN: Update report status (submitted → acknowledged → in_progress → fixed)."""
-    valid_statuses = ["submitted", "acknowledged", "in_progress", "fixed"]
+    """ADMIN: Update report status (submitted → under_review → assigned → in_progress → fixed)."""
+    valid_statuses = ["submitted", "received", "acknowledged", "under_review", "assigned", "dispatched", "in_progress", "quality_check", "fixed", "completed"]
     if status not in valid_statuses:
         raise HTTPException(400, f"Invalid status. Must be one of: {valid_statuses}")
 
     for r in citizen_reports:
         if r["id"] == report_id:
             r["status"] = status
+            if note:
+                r["inspector_notes"] = note
             if "status_history" not in r or not isinstance(r["status_history"], list):
                 r["status_history"] = []
             r["status_history"].append({
                 "status": status,
                 "time": datetime.now(timezone.utc).isoformat(),
-                "note": note or f"Status updated to {status.replace('_', ' ').title()}",
+                "note": note or f"Status updated to {status.replace('_', ' ').title()} by Inspector",
             })
-            if status == "fixed":
+            if status in ("fixed", "completed"):
+                r["fix_date"] = datetime.now(timezone.utc).isoformat()
+            _persist_shared_store()
+            return {"id": report_id, "status": status, "message": f"Status updated to {status}"}
+
+    for r in detection_store:
+        if r["id"] == report_id:
+            r["status"] = status
+            if note:
+                r["inspector_notes"] = note
+            if "status_history" not in r or not isinstance(r["status_history"], list):
+                r["status_history"] = []
+            r["status_history"].append({
+                "status": status,
+                "time": datetime.now(timezone.utc).isoformat(),
+                "note": note or f"Status updated to {status.replace('_', ' ').title()} by Inspector",
+            })
+            if status in ("fixed", "completed"):
                 r["fix_date"] = datetime.now(timezone.utc).isoformat()
             _persist_shared_store()
             return {"id": report_id, "status": status, "message": f"Status updated to {status}"}

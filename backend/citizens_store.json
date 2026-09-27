@@ -4,17 +4,5 @@
     "role": "citizen",
     "name": "Citizen User",
     "username": "citizen"
-  },
-  "rahul_citizen": {
-    "password": "rahulpassword123",
-    "role": "citizen",
-    "name": "Rahul Sharma",
-    "username": "rahul_citizen"
-  },
-  "abhang": {
-    "password": "abhang123",
-    "role": "citizen",
-    "name": "Abhang Golhar",
-    "username": "abhang"
   }
 }

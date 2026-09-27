@@ -123,6 +123,8 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -255,9 +257,11 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
     return "low";
   };
 
-  const incomingReports = (reports || []).filter(r => r && !r.assigned_to && r.status !== "fixed" && r.status !== "completed");
-  const priorityQueue = (reports || []).filter(r => r && !r.assigned_to && r.status !== "fixed" && r.status !== "completed");
-  const activeAssignedReports = (reports || []).filter(r => r && r.assigned_to && r.status !== "fixed" && r.status !== "completed");
+  const isAssigned = (r) => Boolean(r && r.assigned_to && r.assigned_to !== "None" && r.assigned_to !== "null" && r.assigned_to !== "undefined");
+
+  const incomingReports = (reports || []).filter(r => r && !isAssigned(r) && r.status !== "fixed" && r.status !== "completed" && (r.status === "submitted" || r.status === "received" || !r.status || r.status === "pending"));
+  const priorityQueue = (reports || []).filter(r => r && !isAssigned(r) && r.status !== "fixed" && r.status !== "completed");
+  const activeAssignedReports = (reports || []).filter(r => r && isAssigned(r) && r.status !== "fixed" && r.status !== "completed");
   const completedReports = (reports || []).filter(r => r && (r.status === "fixed" || r.status === "completed"));
 
   const filteredQueue = priorityQueue
@@ -423,13 +427,19 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                       {/* Action Bar */}
                       <div className="flex items-center gap-2 pt-2 border-t border-white/[0.04]">
                         <button
+                          onClick={() => handleUpdateStatus(r.id, "under_review")}
+                          className="flex-1 py-2.5 rounded-xl bg-[#ff9f43]/10 border border-[#ff9f43]/30 text-[#ff9f43] font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#ff9f43]/20 transition-all cursor-pointer"
+                        >
+                          <Eye className="w-4 h-4" /> Mark Under Review & Move to Priority Queue
+                        </button>
+                        <button
                           onClick={() => {
                             setPriorityLevel(r.id, "high");
                             setAssigningReport(r);
                           }}
                           className="flex-1 py-2.5 rounded-xl bg-[#ffd76b]/10 border border-[#ffd76b]/30 text-[#ffd76b] font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#ffd76b]/20 transition-all cursor-pointer"
                         >
-                          <ListOrdered className="w-4 h-4" /> Add to Priority Queue & Assign Contractor
+                          <Send className="w-4 h-4" /> Assign Contractor
                         </button>
                       </div>
                     </motion.div>
@@ -709,7 +719,7 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
                   </div>
                   <div>
                     <span className="text-2xl font-extrabold text-emerald-400">
-                      {activeAssignedReports.filter(r => r.contractor_decision === "received" || r.status === "received" || r.status === "in_progress" || r.status === "dispatched" || r.status === "under_review").length}
+                      {activeAssignedReports.filter(r => r.contractor_decision === "received" || r.contractor_decision === "accepted" || r.status === "received" || r.status === "in_progress" || r.status === "dispatched" || r.status === "under_review" || r.status === "assigned").length}
                     </span>
                     <p className="text-[10px] text-white/40 font-semibold uppercase">Accepted / In Field</p>
                   </div>

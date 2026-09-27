@@ -758,18 +758,98 @@ export default function CitizenView({ user, onLogout }) {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border flex-shrink-0 self-start sm:self-center" style={{ backgroundColor: `${status.color}15`, borderColor: `${status.color}30` }}>
-                            <StatusIcon className="w-3.5 h-3.5" style={{ color: status.color }} />
-                            <span className="text-xs font-bold" style={{ color: status.color }}>{status.label}</span>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0 self-start sm:self-center">
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border" style={{ backgroundColor: `${status.color}15`, borderColor: `${status.color}30` }}>
+                              <StatusIcon className="w-3.5 h-3.5" style={{ color: status.color }} />
+                              <span className="text-xs font-bold" style={{ color: status.color }}>{status.label}</span>
+                            </div>
+                            {r.assigned_to && (
+                              <span className="text-[10px] text-[#4edea3] font-semibold">
+                                Contractor: @{r.assigned_to}
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        {latestNote && (
-                          <div className="pt-2 border-t border-white/[0.04] text-[11px] text-[#5de6ff]/80 flex items-center gap-1.5 bg-[#5de6ff]/[0.03] p-2.5 rounded-xl">
-                            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span><strong>Inspector Update:</strong> {latestNote}</span>
+                        {/* 5-Stage Live Progress Tracker */}
+                        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3 space-y-2">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-white/60">
+                            <span className="flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-[#5de6ff]" /> Repair Lifecycle Progress
+                            </span>
+                            <span className="text-[#5de6ff]">
+                              Stage {getCitizenStageIndex(r)} of 5
+                            </span>
                           </div>
-                        )}
+                          <div className="grid grid-cols-5 gap-1 pt-0.5">
+                            {[
+                              { id: "submitted", label: "1. Received", icon: "📩" },
+                              { id: "under_review", label: "2. Under Review", icon: "👀" },
+                              { id: "assigned", label: "3. Assigned", icon: "🚚" },
+                              { id: "in_progress", label: "4. Repairing", icon: "🛠️" },
+                              { id: "fixed", label: "5. Verified", icon: "✅" },
+                            ].map((stg, idx) => {
+                              const activeStage = getCitizenStageIndex(r);
+                              const stepNum = idx + 1;
+                              const isDone = activeStage > stepNum;
+                              const isCurrent = activeStage === stepNum;
+
+                              return (
+                                <div
+                                  key={stg.id}
+                                  className={`px-1.5 py-1 rounded-lg border text-[9px] font-bold flex flex-col items-center justify-center text-center transition-all ${
+                                    isDone
+                                      ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
+                                      : isCurrent
+                                      ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-sm animate-pulse"
+                                      : "bg-white/[0.02] border-white/[0.05] text-white/30"
+                                  }`}
+                                >
+                                  <span>{stg.icon}</span>
+                                  <span className="truncate w-full mt-0.5">{stg.label}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Inspector Communication & Feedback Box */}
+                        <div className="p-3 rounded-xl bg-[#5de6ff]/[0.03] border border-[#5de6ff]/15 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs pb-1 border-b border-white/[0.05]">
+                            <span className="text-[10px] font-bold text-[#5de6ff] uppercase tracking-wider flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-[#5de6ff]" /> Inspector Updates & Feedback
+                            </span>
+                            {(r.inspector_cost_estimate || r.cost_estimate_inr || r.cost_estimated) && (
+                              <span className="text-[10px] font-bold text-[#4edea3]">
+                                Budget Allocated: ₹{Number(r.inspector_cost_estimate || r.cost_estimate_inr || r.cost_estimated).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-white/80 leading-relaxed">
+                            {r.inspector_notes || r.assignment_notes || latestNote || "Report received. Inspector review in progress."}
+                          </p>
+
+                          {r.status_history?.length > 0 && (
+                            <div className="pt-1.5 border-t border-white/[0.04] space-y-1">
+                              <span className="text-[9px] text-white/40 uppercase font-semibold block">Status History Timeline</span>
+                              <div className="space-y-1 max-h-24 overflow-y-auto pr-1">
+                                {r.status_history.map((sh, shIdx) => (
+                                  <div key={shIdx} className="flex items-center justify-between text-[10px] text-white/50">
+                                    <span className="font-medium text-white/70">
+                                      • {sh.note || sh.status}
+                                    </span>
+                                    {sh.time && (
+                                      <span className="text-[9px] text-white/30 font-mono">
+                                        {new Date(sh.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </motion.div>
                     );
                   })

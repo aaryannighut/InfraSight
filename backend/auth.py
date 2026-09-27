@@ -97,6 +97,7 @@ def _load_contractors():
     try:
         if CONTRACTORS_FILE.exists():
             data = json.loads(CONTRACTORS_FILE.read_text())
+            CONTRACTORS.clear()
             for username, info in data.items():
                 CONTRACTORS[username] = info
     except Exception as e:
@@ -130,6 +131,7 @@ def register_contractor(name: str, company: str, username: str, password: str) -
     return contractor_data
 
 def get_all_contractors() -> list[dict]:
+    _load_contractors()
     return [
         {
             "username": c["username"],
@@ -193,6 +195,8 @@ def register_citizen_user(name: str, username: str, password: str) -> dict:
     }
 
 def login(username: str, password: str) -> dict:
+    _load_contractors()
+    _load_citizens()
     clean_username = username.strip().lower()
     user = USERS.get(clean_username) or CONTRACTORS.get(clean_username) or CITIZENS.get(clean_username)
     if not user:

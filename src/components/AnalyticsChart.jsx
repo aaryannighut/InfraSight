@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -14,30 +15,29 @@ import {
   Cell,
 } from "recharts";
 
-const scanData = [
-  { date: "Mon", scans: 45, cracks: 3 },
-  { date: "Tue", scans: 62, cracks: 5 },
-  { date: "Wed", scans: 38, cracks: 2 },
-  { date: "Thu", scans: 71, cracks: 8 },
-  { date: "Fri", scans: 56, cracks: 4 },
-  { date: "Sat", scans: 23, cracks: 1 },
-  { date: "Sun", scans: 18, cracks: 1 },
+const API_URL = import.meta.env.VITE_API_URL ?? "";
+
+const DEFAULT_SCAN_DATA = [
+  { date: "Mon", scans: 0, cracks: 0 },
+  { date: "Tue", scans: 0, cracks: 0 },
+  { date: "Wed", scans: 0, cracks: 0 },
+  { date: "Thu", scans: 0, cracks: 0 },
+  { date: "Fri", scans: 0, cracks: 0 },
+  { date: "Sat", scans: 0, cracks: 0 },
+  { date: "Sun", scans: 0, cracks: 0 },
 ];
 
-const severityData = [
-  { name: "Critical", value: 12, color: "#ef4444" },
-  { name: "Moderate", value: 34, color: "#f59e0b" },
-  { name: "Minor", value: 43, color: "#eab308" },
-  { name: "Clear", value: 158, color: "#10b981" },
+const DEFAULT_SEVERITY_DATA = [
+  { name: "Critical", value: 0, color: "#ef4444" },
+  { name: "Moderate", value: 0, color: "#f59e0b" },
+  { name: "Minor", value: 0, color: "#eab308" },
+  { name: "Clear", value: 0, color: "#10b981" },
 ];
 
-const monthlyData = [
-  { month: "Jan", detected: 24, resolved: 20 },
-  { month: "Feb", detected: 31, resolved: 28 },
-  { month: "Mar", detected: 18, resolved: 17 },
-  { month: "Apr", detected: 42, resolved: 35 },
-  { month: "May", detected: 28, resolved: 26 },
-  { month: "Jun", detected: 35, resolved: 33 },
+const DEFAULT_MONTHLY_DATA = [
+  { month: "Jul", detected: 0, resolved: 0 },
+  { month: "Aug", detected: 0, resolved: 0 },
+  { month: "Sep", detected: 0, resolved: 0 },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -57,6 +57,28 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function AnalyticsChart() {
+  const [scanData, setScanData] = useState(DEFAULT_SCAN_DATA);
+  const [severityData, setSeverityData] = useState(DEFAULT_SEVERITY_DATA);
+  const [monthlyData, setMonthlyData] = useState(DEFAULT_MONTHLY_DATA);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/analytics/summary`)
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error("Failed to fetch analytics summary");
+      })
+      .then((data) => {
+        if (data.scan_data?.length) setScanData(data.scan_data);
+        if (data.severity_data?.length) setSeverityData(data.severity_data);
+        if (data.monthly_data?.length) setMonthlyData(data.monthly_data);
+      })
+      .catch(() => {
+        /* keep defaults */
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Scans over time - large chart */}
@@ -69,7 +91,7 @@ export default function AnalyticsChart() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Scan Activity</h3>
-            <p className="text-[11px] text-zinc-500">Daily scans & detections this week</p>
+            <p className="text-[11px] text-zinc-500">Real-time daily scans & defect detections (Project Data)</p>
           </div>
           <div className="flex gap-4">
             <div className="flex items-center gap-1.5">
@@ -78,7 +100,7 @@ export default function AnalyticsChart() {
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-red-500" />
-              <span className="text-[10px] text-zinc-500">Cracks</span>
+              <span className="text-[10px] text-zinc-500">Defects</span>
             </div>
           </div>
         </div>
@@ -99,7 +121,7 @@ export default function AnalyticsChart() {
             <YAxis tick={{ fontSize: 11, fill: "#71717a" }} axisLine={false} tickLine={false} />
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="scans" stroke="#10b981" fill="url(#scanGradient)" strokeWidth={2} name="Scans" />
-            <Area type="monotone" dataKey="cracks" stroke="#ef4444" fill="url(#crackGradient)" strokeWidth={2} name="Cracks" />
+            <Area type="monotone" dataKey="cracks" stroke="#ef4444" fill="url(#crackGradient)" strokeWidth={2} name="Defects" />
           </AreaChart>
         </ResponsiveContainer>
       </motion.div>
@@ -112,7 +134,7 @@ export default function AnalyticsChart() {
         transition={{ delay: 0.3 }}
       >
         <h3 className="text-sm font-semibold text-white mb-1">Severity Distribution</h3>
-        <p className="text-[11px] text-zinc-500 mb-4">Last 30 days breakdown</p>
+        <p className="text-[11px] text-zinc-500 mb-4">Project Reports Breakdown</p>
         <ResponsiveContainer width="100%" height={160}>
           <PieChart>
             <Pie
@@ -154,7 +176,7 @@ export default function AnalyticsChart() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-white">Monthly Trend</h3>
-            <p className="text-[11px] text-zinc-500">Detected vs Resolved cracks</p>
+            <p className="text-[11px] text-zinc-500">Detected vs Resolved defects across project</p>
           </div>
           <div className="flex gap-4">
             <div className="flex items-center gap-1.5">

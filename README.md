@@ -25,11 +25,11 @@
 > Last year in Maharashtra alone, **3,275 people died** because of potholes on Indian roads.
 > **73% of reported potholes are never fixed.** ₹33,000 crore is spent annually on road repairs, but manual inspection is slow, expensive, and dangerous.
 >
-> **CRACKWATCH / INFRASIGHT** doesn't just detect damage — it **predicts when infrastructure will fail, estimates repair costs in INR, structures a complete 3-role workflow (Citizen ➔ Inspector ➔ Contractor), and publicly ranks contractors by accountability**.
+> **CRACKWATCH / INFRASIGHT** doesn't just detect damage — it **predicts when infrastructure will fail, estimates repair costs in INR, continuously learns from inspector cost feedback, structures a complete 3-role workflow (Citizen ➔ Inspector ➔ Contractor), and publicly ranks contractors by accountability**.
 >
 > Citizens report via the Web App or WhatsApp in under 3 seconds across 4 infrastructure categories (Roads, Buildings, Pipelines, Bridges).
-> Inspectors review AI detections, rank complaints in a Priority Queue, register contractor accounts, and assign work orders.
-> Contractors receive assigned tasks, update real-time progress, and upload repair proof photos for AI Before/After verification.
+> Inspectors review AI detections, rank complaints in a Priority Queue, register contractor accounts, assign work orders with allocated budgets, and monitor assigned/completed work.
+> Contractors receive assigned tasks, update multi-stage repair progress, and upload proof-of-fix photos for AI Before/After verification.
 >
 > **Detecting a pothole doesn't fix it. A watched government does.**
 
@@ -64,9 +64,9 @@ Unified intelligence platform covering potholes, structural cracks, water pipe l
 <tr>
 <td width="33%" align="center">
 
-### 🔮 Predictive Engine
+### 🔮 Predictive Engine & AI Learning
 **"This road fails in 18 days."**
-Monsoon-adjusted damage progression model. Shows cost delta if repair is delayed.
+Monsoon-adjusted damage progression model + Continuous AI price learning engine fine-tuned by inspector feedback.
 
 </td>
 <td width="33%" align="center">
@@ -164,7 +164,10 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 | 🔍 **AI Verification Tool** | Inspect bounding boxes, severity score, image trust score, and fraud checks |
 | ⚠️ **Priority Queue Manager** | Structure complaints into ranked priority queues (*Critical*, *High*, *Medium*, *Low*) |
 | 👷 **Contractor Registration** | Register contractor accounts with Name, Company/Agency, Username, and Password |
-| 📌 **Work Order Assignment** | Dispatch verified priority reports to registered contractors with target dates and notes |
+| 📌 **Work Order Assignment** | Dispatch verified priority reports to registered contractors with target dates, notes, and budget allocation |
+| 📈 **Assigned Work Dashboard** | Monitor active field work orders, priority distribution, contractor progress, and deadlines |
+| ✅ **Completed Work Overview** | Audit submitted repair proofs, compare before/after AI verification, and confirm completion |
+| 💡 **Continuous AI Price Learning** | Record inspector manual cost overrides to fine-tune future AI cost models |
 | 🗺️ **Inspector Control Map** | Map view showing all active, assigned, and resolved infrastructure reports |
 | 📊 **Advanced Analytics** | Access City Health Scores, Wall of Shame, Smart Heatmap, and Predictive Forecasts |
 | 🛡️ **System & Fraud Settings** | Toggle 5-layer fraud detection and system parameters on/off |
@@ -173,9 +176,9 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 
 | Feature | What It Does |
 |---------|--------------|
-| 🔑 **Role-Based Auth** | Secure login using Inspector-generated credentials |
-| 📋 **Assigned Work Orders** | View assigned repair jobs with priority badges, location, cost allocation, and deadlines |
-| 🔄 **Status Progress Drawer** | Update job status sequentially (`Work Assigned` ➔ `In Progress` ➔ `Submitted Proof`) |
+| 🔑 **Role-Based Auth** | Secure login using Inspector-generated credentials (Default: `@contractor`) |
+| 📋 **Assigned Work Orders** | View assigned repair jobs with priority badges, location, cost allocation, and target completion dates |
+| 🔄 **Multi-Stage Progress Drawer** | Update job status sequentially (`Dispatched` ➔ `Site Prep` ➔ `Repairing` ➔ `Quality Audit` ➔ `Verified`) |
 | 📸 **Proof of Fix Upload** | Upload "After Repair" photo for AI verification before task completion |
 | 📊 **Performance Metrics** | Track active assignments, completed repair count, and efficiency stats |
 
@@ -303,9 +306,9 @@ npm run dev                # → https://localhost:5175
 
 | Role | Username | Password | Access & Capabilities |
 |------|----------|----------|-----------------------|
-| 🏛️ **Inspector** | `inspector` | `inspector123` | Full Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders) |
+| 🏛️ **Inspector** | `inspector` | `inspector123` | Full Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders, monitor Work Dashboards) |
 | 🏛️ **Inspector (Admin)** | `admin` | `admin123` | Full Inspector Command Center & System Settings |
-| 👷 **Contractor** | `contractor` | `contractor123` | Contractor Portal (View assigned tasks, update status, upload repair proof) |
+| 👷 **Contractor** | `contractor` | `contractor123` | Contractor Portal (View assigned tasks, update multi-stage status, upload repair proof) — *Apex Infrastructure Ltd* |
 | 📱 **Citizen (Demo)** | `citizen` | `citizen123` | Citizen Portal across 4 sectors + report tracking |
 | 📱 **Citizen (Pre-seeded)** | `saud` | `123` | Gamified citizen account (Lv.6, 3200 XP, 10 badges, #1 leaderboard) |
 
@@ -324,7 +327,7 @@ GET  /inspector/contractors      Inspector fetches all registered contractors
 
 ### Work Order & Contractor Assignment
 ```
-POST /inspector/assign-work            Inspector assigns report to contractor with priority & target date
+POST /inspector/assign-work            Inspector assigns report to contractor with priority, budget & target date
 GET  /contractor/tasks                 Contractor fetches assigned work orders
 POST /contractor/tasks/{id}/status     Contractor updates status & uploads repair proof image
 ```
@@ -377,6 +380,6 @@ MIT — Open-source infrastructure intelligence and accountability platform.
 
 *Detecting damage doesn't fix it. A watched government does.*
 
-[⬆ back to top](#%EF%B8%8F-crackwatch--infrasight)
+[⬆ back to top](#%EF%B8%8F-infrasight)
 
 </div>
