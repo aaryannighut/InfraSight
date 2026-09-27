@@ -96,27 +96,25 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 ┌────────────────────────────────────────────────────────────────────────┐
 │                          INFRASIGHT ECOSYSTEM                           │
 │                                                                          │
-│            ┌──────────────┐                 ┌──────────────┐            │
-│            │ Inspector    │                 │ Citizen PWA  │            │
-│            │ Command Ctr  │                 │ React + Vite │            │
-│            │ React + Vite │                 │ Port 5175    │            │
-│            │ Port 5173    │                 │ Phone-frame  │            │
-│            └──────┬───────┘                 └──────┬───────┘            │
-│                   │                                │                    │
-│                   └────────────────┬───────────────┘                    │
-│                                    ▼                                    │
-│                           ┌────────────────┐                            │
-│                           │ HTTPS :8000    │                            │
-│                           │ FastAPI Server │                            │
-│                           └───────┬────────┘                            │
-│                                   │                                     │
-│  ┌──────┬──────┬──────┬──────┼────┴─┬──────┬──────┬──────┐              │
-│  ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼              │
-│ YOLO  Crack  OpenCV Severity Cost  Fraud Predict Gamify Analytics       │
-│ RDD   Seg    CV     Engine   INR   5-lyr X-days  XP/Lvl Wall of Shame   │
+│                        ┌───────────────────┐                             │
+│                        │  Command Center   │                             │
+│                        │   React + Vite    │                             │
+│                        │   Port 5173       │                             │
+│                        └─────────┬─────────┘                             │
+│                                  │                                       │
+│                                  ▼                                       │
+│                         ┌────────────────┐                               │
+│                         │ HTTPS :8000    │                               │
+│                         │ FastAPI Server │                               │
+│                         └───────┬────────┘                               │
+│                                 │                                        │
+│  ┌──────┬──────┬──────┬──────┼──┴──┬──────┬──────┬──────┐              │
+│  ▼      ▼      ▼      ▼      ▼     ▼      ▼      ▼      ▼              │
+│ YOLO  Crack  OpenCV Severity Cost Fraud Predict Gamify Analytics        │
+│ RDD   Seg    CV     Engine   INR  5-lyr X-days  XP/Lvl Wall of Shame    │
 │                                                                          │
 │                       ┌──────────────┐                                   │
-│                       │ shared_store │ ← cross-process state sync        │
+│                       │ shared_store │ ← data persistence                │
 │                       │    .json     │                                   │
 │                       └──────────────┘                                   │
 └────────────────────────────────────────────────────────────────────────┘
@@ -127,10 +125,10 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 ```
 ┌─────────────────────────┐        ┌─────────────────────────┐        ┌─────────────────────────┐
 │ 1. Citizen              │        │ 2. Inspector            │        │ 3. Contractor           │
-│ • Select Sector         │ ──────►│ • Review Incoming Detections   │ ──────►│ • Login Credentials     │
+│ • Select Sector         │ ──────►│ • Review Detections     │ ──────►│ • Login Credentials     │
 │ • Photo/Video Upload    │        │ • Set Priority Queue    │        │ • View Work Orders      │
-│ • AI Analysis Preview   │        │ • Track Report Status   │        │ • Assign Work Order     │        │ • Update Status         │
-│ • Track Report Status   │        │ • Monitor Work Orders   │        │ • Upload Repair Proof   │
+│ • AI Analysis Preview   │        │ • Register Contractor   │        │ • Update Status         │
+│ • Track Report Status   │        │ • Assign Work Order     │        │ • Upload Repair Proof   │
 └─────────────────────────┘        └─────────────────────────┘        └─────────────────────────┘
 ```
 
@@ -138,7 +136,7 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 
 ## ✨ Complete Feature List
 
-### 📱 1. Citizen Portal / PWA
+### 📱 1. Citizen Portal View
 
 | Feature | What It Does |
 |---------|--------------|
@@ -203,7 +201,7 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 </td>
 <td valign="top" width="50%">
 
-### 🎨 Frontend (Main App)
+### 🎨 Frontend (Main Application)
 - **React 19** + **Vite 8**
 - **Tailwind CSS v4** (via `@tailwindcss/vite`)
 - **shadcn/ui** component primitives
@@ -212,11 +210,6 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 - **Leaflet** + **react-leaflet-cluster** — Maps
 - **Lucide React** — Icons
 - **Space Grotesk + Geist** — Typography
-
-### 📱 Frontend (Public Citizen PWA)
-- **React 19** + **Vite 8**
-- **Leaflet Routing Machine** (OSRM) — Pothole-aware nav
-- **Framer Motion** — Phone-frame animations
 
 ### 🔌 Integrations
 - **OpenStreetMap / Nominatim** — Geocoding
@@ -253,23 +246,14 @@ pip install -r requirements.txt
 ### 3. Install Frontend Dependencies
 
 ```bash
-# Main App
 cd ..
 npm install
-
-# Public PWA
-cd public-app
-npm install
-cd ..
 ```
 
 ### 4. Configure Environment
 
 ```bash
-# .env (Main App)
-VITE_API_URL=
-
-# public-app/.env
+# .env (Root Directory)
 VITE_API_URL=
 ```
 
@@ -280,12 +264,8 @@ VITE_API_URL=
 cd backend
 python -m uvicorn main:app --host 0.0.0.0 --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
 
-# Terminal 2 — Main Command Center App
+# Terminal 2 — Command Center App
 npm run dev                # → https://localhost:5173
-
-# Terminal 3 — Public Citizen PWA
-cd public-app
-npm run dev                # → https://localhost:5175
 ```
 
 ---
@@ -336,7 +316,7 @@ GET  /public/reports/{id}          Single report detail
 POST /public/reports/{id}/upvote   Upvote a citizen report
 ```
 
-### Analytics & System Settings
+### Analytics & Security Controls
 ```
 GET  /analytics/wall-of-shame       Contractor accountability leaderboard
 GET  /analytics/heatmap             Geo-intensity damage map points
