@@ -27,7 +27,7 @@
 >
 > **CRACKWATCH / INFRASIGHT** doesn't just detect damage — it **predicts when infrastructure will fail, estimates repair costs in INR, continuously learns from inspector cost feedback, structures a complete 3-role workflow (Citizen ➔ Inspector ➔ Contractor), and publicly ranks contractors by accountability**.
 >
-> Citizens report via the Web App or WhatsApp in under 3 seconds across 4 infrastructure categories (Roads, Buildings, Pipelines, Bridges).
+> Citizens report via the Web App across 4 infrastructure categories (Roads, Buildings, Pipelines, Bridges).
 > Inspectors review AI detections, rank complaints in a Priority Queue, register contractor accounts, assign work orders with allocated budgets, and monitor assigned/completed work.
 > Contractors receive assigned tasks, update multi-stage repair progress, and upload proof-of-fix photos for AI Before/After verification.
 >
@@ -78,9 +78,9 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 </td>
 <td width="33%" align="center">
 
-### 💬 WhatsApp Bot
-**Zero app install needed.**
-500M Indian WhatsApp users can report damage *right now* via photo + location share with automated AI replies.
+### 🧭 Pothole-Aware Navigation
+**Hazard avoidance & routing.**
+Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoid Potholes" toggle.
 
 </td>
 </tr>
@@ -94,28 +94,21 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 ┌────────────────────────────────────────────────────────────────────────┐
 │                          INFRASIGHT ECOSYSTEM                           │
 │                                                                          │
-│   ┌──────────────┐     ┌──────────────┐     ┌────────────────┐          │
-│   │  Govt App    │     │  Citizen PWA │     │  WhatsApp Bot  │          │
-│   │  React+Vite  │     │  React+Vite  │     │  (Twilio)      │          │
-│   │  Port 5173   │     │  Port 5175   │     │  +14155238886  │          │
-│   │  HTTPS       │     │  Phone-frame │     │  join code     │          │
-│   └──────┬───────┘     └──────┬───────┘     └────────┬───────┘          │
-│          │                    │                      │                   │
-│          └──────────┬─────────┴──────────┬───────────┘                   │
-│                     ▼                    ▼                               │
-│            ┌───────────────┐    ┌───────────────┐                        │
-│            │ HTTPS :8000   │    │ HTTP :8001    │                        │
-│            │ Frontend API  │    │ ngrok tunnel  │                        │
-│            └───────┬───────┘    └───────┬───────┘                        │
-│                    │                    │                                │
-│                    └──────────┬─────────┘                                │
-│                               │                                          │
-│                       ┌───────▼────────┐                                 │
-│                       │   FastAPI      │                                 │
-│                       │   (single app) │                                 │
-│                       └───────┬────────┘                                 │
-│                               │                                          │
-│  ┌──────┬──────┬──────┬──────┼──────┬──────┬──────┬──────┐              │
+│            ┌──────────────┐                 ┌──────────────┐            │
+│            │ Inspector    │                 │ Citizen PWA  │            │
+│            │ Command Ctr  │                 │ React + Vite │            │
+│            │ React + Vite │                 │ Port 5175    │            │
+│            │ Port 5173    │                 │ Phone-frame  │            │
+│            └──────┬───────┘                 └──────┬───────┘            │
+│                   │                                │                    │
+│                   └────────────────┬───────────────┘                    │
+│                                    ▼                                    │
+│                           ┌────────────────┐                            │
+│                           │ HTTPS :8000    │                            │
+│                           │ FastAPI Server │                            │
+│                           └───────┬────────┘                            │
+│                                   │                                     │
+│  ┌──────┬──────┬──────┬──────┼────┴─┬──────┬──────┬──────┐              │
 │  ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼      ▼              │
 │ YOLO  Crack  OpenCV Severity Cost  Fraud Predict Gamify Analytics       │
 │ RDD   Seg    CV     Engine   INR   5-lyr X-days  XP/Lvl Wall of Shame   │
@@ -154,7 +147,6 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 | ⬆️ **Upvote System** | Community voting to highlight urgent local damage reports |
 | 🧭 **Pothole-Aware Navigation** | OSRM routing with safety scores, hazard markers, and "Avoid Potholes" toggle |
 | 🏆 **Gamification Engine** | Earn XP, Civic Coins, 13 achievement badges, daily streaks, and Pothole Hunter leaderboard |
-| 💬 **WhatsApp Integration** | Report damage directly from WhatsApp without app installation |
 
 ### 🏛️ 2. Inspector Command Center
 
@@ -203,7 +195,6 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 - **Uvicorn 0.30** — ASGI server with HTTPS
 - **Pillow** — Image decoding + EXIF extraction
 - **python-dotenv** — Credentials management
-- **Twilio SDK 9.3** — WhatsApp integration
 - **JWT** — Stateless role-based authentication
 
 </td>
@@ -225,9 +216,8 @@ Image authenticity + GPS validation + content relevance + duplicate detection + 
 - **Framer Motion** — Phone-frame animations
 
 ### 🔌 Integrations
-- **Twilio WhatsApp Sandbox** — Messaging platform
-- **ngrok** — HTTPS tunnel for webhooks
 - **OpenStreetMap / Nominatim** — Geocoding
+- **OSRM** — Pothole-aware routing engine
 
 </td>
 </tr>
@@ -278,11 +268,6 @@ VITE_API_URL=
 
 # public-app/.env
 VITE_API_URL=
-
-# backend/.env (for WhatsApp)
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxx
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```
 
 ### 5. Run Everything
@@ -306,8 +291,7 @@ npm run dev                # → https://localhost:5175
 
 | Role | Username | Password | Access & Capabilities |
 |------|----------|----------|-----------------------|
-| 🏛️ **Inspector** | `inspector` | `inspector123` | Full Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders, monitor Work Dashboards) |
-| 🏛️ **Inspector (Admin)** | `admin` | `admin123` | Full Inspector Command Center & System Settings |
+| 🏛️ **Inspector** | `inspector` | `inspector123` | Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders, monitor Work Dashboards) |
 | 👷 **Contractor** | `contractor` | `contractor123` | Contractor Portal (View assigned tasks, update multi-stage status, upload repair proof) — *Apex Infrastructure Ltd* |
 | 📱 **Citizen (Demo)** | `citizen` | `citizen123` | Citizen Portal across 4 sectors + report tracking |
 | 📱 **Citizen (Pre-seeded)** | `saud` | `123` | Gamified citizen account (Lv.6, 3200 XP, 10 badges, #1 leaderboard) |
@@ -361,11 +345,10 @@ GET  /admin/settings               Read system settings
 PATCH /admin/settings              Toggle fraud detection
 ```
 
-### Gamification & WhatsApp
+### Gamification
 ```
 GET  /gamification/leaderboard     Top citizen leaderboard
 GET  /gamification/profile/{id}    User profile & achievements
-POST /whatsapp/webhook             Twilio incoming WhatsApp webhook
 ```
 
 ---
