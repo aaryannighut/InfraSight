@@ -1,5 +1,7 @@
 <div align="center">
 
+<a id="top"></a>
+
 # 🛣️ INFRA**SIGHT**
 
 ### *AI-Powered Smart Infrastructure Command Center*
@@ -127,8 +129,8 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 │ 1. Citizen              │        │ 2. Inspector            │        │ 3. Contractor           │
 │ • Select Sector         │ ──────►│ • Review Incoming Detections   │ ──────►│ • Login Credentials     │
 │ • Photo/Video Upload    │        │ • Set Priority Queue    │        │ • View Work Orders      │
-│ • AI Analysis Preview   │        │ • Register Contractor   │        │ • Update Status         │
-│ • Track Report Status   │        │ • Assign Work Order     │        │ • Upload Repair Proof   │
+│ • AI Analysis Preview   │        │ • Track Report Status   │        │ • Assign Work Order     │        │ • Update Status         │
+│ • Track Report Status   │        │ • Monitor Work Orders   │        │ • Upload Repair Proof   │
 └─────────────────────────┘        └─────────────────────────┘        └─────────────────────────┘
 ```
 
@@ -161,14 +163,15 @@ Interactive OSRM routing with safety scores, real-time hazard markers, and "Avoi
 | ✅ **Completed Work Overview** | Audit submitted repair proofs, compare before/after AI verification, and confirm completion |
 | 💡 **Continuous AI Price Learning** | Record inspector manual cost overrides to fine-tune future AI cost models |
 | 🗺️ **Inspector Control Map** | Map view showing all active, assigned, and resolved infrastructure reports |
+| 🛠️ **Repair Plan Generator** | Auto-generate material lists, urgency breakdown, cost allocation, and action items |
 | 📊 **Advanced Analytics** | Access City Health Scores, Wall of Shame, Smart Heatmap, and Predictive Forecasts |
-| 🛡️ **System & Fraud Settings** | Toggle 5-layer fraud detection and system parameters on/off |
+| 🛡️ **Security Controls** | Toggle 5-layer fake report detection and inspect active AI model configuration |
 
 ### 👷 3. Contractor Portal
 
 | Feature | What It Does |
 |---------|--------------|
-| 🔑 **Role-Based Auth** | Secure login using Inspector-generated credentials (Default: `@contractor`) |
+| 🔑 **Role-Based Auth** | Secure login using Inspector-generated credentials (Default active: `@contractor`) |
 | 📋 **Assigned Work Orders** | View assigned repair jobs with priority badges, location, cost allocation, and target completion dates |
 | 🔄 **Multi-Stage Progress Drawer** | Update job status sequentially (`Dispatched` ➔ `Site Prep` ➔ `Repairing` ➔ `Quality Audit` ➔ `Verified`) |
 | 📸 **Proof of Fix Upload** | Upload "After Repair" photo for AI verification before task completion |
@@ -341,8 +344,8 @@ GET  /analytics/priority-queue      Top urgent repairs queue
 GET  /analytics/city-health         Per-city health scores
 GET  /analytics/forecast            Predictive maintenance forecast
 POST /analytics/before-after       Compare before & after repair images
-GET  /admin/settings               Read system settings
-PATCH /admin/settings              Toggle fraud detection
+GET  /admin/settings               Read security settings
+PATCH /admin/settings              Toggle fake report detection
 ```
 
 ### Gamification
@@ -363,6 +366,6 @@ MIT — Open-source infrastructure intelligence and accountability platform.
 
 *Detecting damage doesn't fix it. A watched government does.*
 
-[⬆ back to top](#%EF%B8%8F-infrasight)
+[⬆ back to top](#top)
 
 </div>
