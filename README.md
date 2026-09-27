@@ -277,7 +277,6 @@ npm run dev                # → https://localhost:5173
 | 🏛️ **Inspector** | `inspector` | `inspector123` | Inspector Command Center (Review media, set Priority Queue, register Contractors, assign Work Orders, monitor Work Dashboards) |
 | 👷 **Contractor** | `contractor` | `contractor123` | Contractor Portal (View assigned tasks, update multi-stage status, upload repair proof) — *Apex Infrastructure Ltd* |
 | 📱 **Citizen (Demo)** | `citizen` | `citizen123` | Citizen Portal across 4 sectors + report tracking |
-| 📱 **Citizen (Pre-seeded)** | `saud` | `123` | Gamified citizen account (Lv.6, 3200 XP, 10 badges, #1 leaderboard) |
 
 ---
 
