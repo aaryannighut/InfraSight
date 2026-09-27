@@ -14,21 +14,31 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
-function AnimatedCounter({ target, duration = 1500, prefix = "", suffix = "" }) {
-  const [count, setCount] = useState(0);
+function AnimatedCounter({ target, duration = 1000, prefix = "", suffix = "" }) {
+  const [count, setCount] = useState(() => {
+    const n = typeof target === "string" ? parseFloat(target) : target;
+    return isNaN(n) ? target : n;
+  });
 
   useEffect(() => {
     const numTarget = typeof target === "string" ? parseFloat(target) : target;
     if (isNaN(numTarget)) { setCount(target); return; }
-    let start = 0;
-    const increment = numTarget / (duration / 16);
+    if (count === numTarget) return;
+
+    let current = typeof count === "number" ? count : 0;
+    const diff = numTarget - current;
+    if (diff === 0) return;
+
+    const steps = Math.max(1, Math.round(duration / 16));
+    const increment = diff / steps;
+
     const timer = setInterval(() => {
-      start += increment;
-      if (start >= numTarget) {
+      current += increment;
+      if ((increment > 0 && current >= numTarget) || (increment < 0 && current <= numTarget)) {
         setCount(numTarget);
         clearInterval(timer);
       } else {
-        setCount(Math.floor(start));
+        setCount(Math.round(current));
       }
     }, 16);
     return () => clearInterval(timer);

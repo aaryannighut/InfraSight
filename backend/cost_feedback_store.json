@@ -1,0 +1,10 @@
+[
+  {
+    "damage_type": "Infrastructure Repair",
+    "severity_label": "high",
+    "ai_cost": 15000.0,
+    "inspector_cost": 20000.0,
+    "ratio": 1.3333333333333333,
+    "timestamp": "2026-09-27T17:13:29.964871+00:00"
+  }
+]

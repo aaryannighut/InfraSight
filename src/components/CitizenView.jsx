@@ -26,6 +26,16 @@ const STATUS_COLORS = {
   fixed: { color: "#4edea3", label: "Fixed & Closed", icon: CheckCircle },
 };
 
+const getCitizenStageIndex = (report) => {
+  if (!report) return 1;
+  const status = report.status;
+  if (status === "fixed" || status === "completed" || status === "verified") return 5;
+  if (status === "in_progress" || status === "quality_check" || status === "repairing") return 4;
+  if (status === "assigned" || status === "dispatched") return 3;
+  if (status === "under_review" || status === "acknowledged" || status === "received") return 2;
+  return 1;
+};
+
 function StatCard({ icon: Icon, value, label, color }) {
   return (
     <motion.div

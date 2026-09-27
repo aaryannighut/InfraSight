@@ -122,13 +122,13 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
   const [regError, setRegError] = useState("");
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 3000);
+    fetchData(true);
+    const interval = setInterval(() => fetchData(false), 4000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const token = sessionStorage.getItem("crackwatch_token") || localStorage.getItem("crackwatch_token");
       const [reportsRes, contractorRes] = await Promise.all([
@@ -142,13 +142,14 @@ export default function InspectorView({ user, onLogout, tabOnly }) {
       }
       if (contractorRes.ok) {
         const cdata = await contractorRes.json();
-        setContractors(cdata.contractors || []);
-        if (cdata.contractors?.length > 0) {
-          setSelectedContractor(cdata.contractors[0].username);
+        const ctrs = cdata.contractors || [];
+        setContractors(ctrs);
+        if (ctrs.length > 0) {
+          setSelectedContractor((prev) => prev || ctrs[0].username);
         }
       }
     } catch { /* silent */ }
-    setLoading(false);
+    if (isInitial) setLoading(false);
   };
 
   const handleReAnalyzeReport = async (reportId) => {
